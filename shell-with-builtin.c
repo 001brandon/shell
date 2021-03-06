@@ -106,11 +106,14 @@ main(int argc, char **argv, char **envp)
 			char    **p;
 			struct pathelement *path, *tmp;
 
-
-			execargs[j] = malloc(strlen(arg[0])+1);
-			strcpy(execargs[0], arg[0]);  // copy command
+			for(int looper=0; looper<arg_no; looper++){
+				execargs[looper]=malloc(strlen(arg[looper])+1);
+				strcpy(execargs[looper], arg[looper]);
+			} //copy all the args into exec args
+			//execargs[0] = malloc(strlen(arg[0])+1);
+			//strcpy(execargs[0], arg[0]);  // copy command
 		        j = 1;
-		        for (i = 1; i < arg_no; i++) // check arguments
+		      for (i = 1; i < arg_no; i++) // check arguments
 			  if (strchr(arg[i], '*') != NULL) { // wildcard!
 			    csource = glob(arg[i], 0, NULL, &paths);
                             if (csource == 0) {
@@ -123,11 +126,11 @@ main(int argc, char **argv, char **envp)
                               globfree(&paths);
                             }
                           }
-                        execargs[j] = NULL;
+                        //execargs[j] = NULL;   // I dont know what this does
 
 			i = 0;
 			//char *const envp[2]={"PATH=/bin",NULL};
-                        for (i = 0; i < j; i++)
+             for (i = 0; i < arg_no; i++)
 			  printf("exec arg [%s]\n", execargs[i]);
 			//execve(execargs[0], execargs, NULL);
 			execvp(execargs[0],execargs); //Use this to execute with respect to
