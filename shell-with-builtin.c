@@ -66,6 +66,8 @@ main(int argc, char **argv, char **envp)
                     
 		  printf("Executing built-in [which]\n");
 
+		  
+
 		  if (arg[1] == NULL) {  // "empty" which
 		    printf("which: Too few arguments.\n");
 		    goto nextprompt;
@@ -94,7 +96,11 @@ main(int argc, char **argv, char **envp)
 		     free(tmp->element);
 		     free(tmp);
                   }
-	        } 
+	        } else if(strcmp(arg[0], "exit") == 0) {
+				printf("Executing built-in [exit]\n");
+				exit(0);
+			}
+			 
 		else {  // external command
 		  if ((pid = fork()) < 0) {
 			printf("fork error");
