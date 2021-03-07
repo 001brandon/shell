@@ -77,7 +77,7 @@ main(int argc, char **argv, char **envp)
            /***/
 		  tmp = p;
 		  while (tmp) {      // print list of paths
-		    printf("path [%s]\n", tmp->element);
+		    //printf("path [%s]\n", tmp->element);
 		    tmp = tmp->next;
                   }
            /***/
@@ -99,7 +99,39 @@ main(int argc, char **argv, char **envp)
 	        } else if(strcmp(arg[0], "exit") == 0) {
 				printf("Executing built-in [exit]\n");
 				exit(0);
-			}
+			} else if(strcmp(arg[0], "where")==0){
+				printf("Executing built-in [where]\n");
+				struct pathelement *p, *tmp;
+                int num;
+		  
+
+		  		if (arg[1] == NULL) {  // "empty" which
+		    		printf("which: Too few arguments.\n");
+		    		goto nextprompt;
+                }
+
+				p = get_path();
+				/***/
+				tmp = p;
+				while (tmp) {      // print list of paths
+					//printf("path [%s]\n", tmp->element);
+					tmp = tmp->next;
+						}
+				/***/
+
+						num = where(arg[1], p);
+						if (num==1) {
+						}
+				else               // argument not found
+					printf("%s: Command not found\n", arg[1]);
+
+				while (p) {   // free list of path values
+					tmp = p;
+					p = p->next;
+					free(tmp->element);
+					free(tmp);
+						}
+	        }
 			 
 		else {  // external command
 		  if ((pid = fork()) < 0) {
