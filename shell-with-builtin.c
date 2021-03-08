@@ -145,7 +145,22 @@ main(int argc, char **argv, char **envp)
 		     free(tmp->element);
 		     free(tmp);
                   }
-	    }	 
+	    }	
+
+		
+		else if (strcmp(arg[0], "cd") == 0) {
+			printf("Executing built-in [cd]\n");
+			if (arg[1] == NULL) {  // "empty" cd
+		    	printf("cd: Too few arguments.\n");
+		    	goto nextprompt;
+            }
+			cd(arg[1]);
+			
+
+
+		}
+
+
 		else {  // external command
 		  if ((pid = fork()) < 0) {
 			printf("fork error");
@@ -183,8 +198,8 @@ main(int argc, char **argv, char **envp)
 			//char *const envp[2]={"PATH=/bin",NULL};
              for (i = 0; i < arg_no; i++)
 			  printf("exec arg [%s]\n", execargs[i]);
-			//execve(execargs[0], execargs, NULL);
-			execvp(execargs[0],execargs); //Use this to execute with respect to
+			execve(execargs[0], execargs, NULL);
+			//execvp(execargs[0],execargs); //Use this to execute with respect to
 			//here is a test
 			printf("couldn't execute: %s", buf);
 			exit(127);
