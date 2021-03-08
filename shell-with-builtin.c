@@ -146,8 +146,6 @@ main(int argc, char **argv, char **envp)
 		     free(tmp);
                   }
 	    }	
-
-		
 		else if (strcmp(arg[0], "cd") == 0) {
 			printf("Executing built-in [cd]\n");
 			if (arg[1] == NULL) {  // "empty" cd
@@ -155,12 +153,22 @@ main(int argc, char **argv, char **envp)
 		    	goto nextprompt;
             }
 			cd(arg[1]);
-			
-
-
 		}
-
-
+		else if (strcmp(arg[0], "list") == 0) {
+			printf("Executing built-in [list]\n");
+			if (arg[1] == NULL) {  // "empty" list defaults to .
+		    	list(".");
+		    	goto nextprompt;
+            }
+			else {
+				list(arg[1]);			
+			}
+		}
+		else if (strcmp(arg[0], "pid") == 0) {
+			printf("Executing built-in [pid]\n");
+			printf("The PID of this process is %d\n",getpid());
+		    //goto nextprompt;
+		}
 		else {  // external command
 		  if ((pid = fork()) < 0) {
 			printf("fork error");
