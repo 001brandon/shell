@@ -72,12 +72,12 @@ main(int argc, char **argv, char **envp)
 		    printf("which: Too few arguments.\n");
 		    goto nextprompt;
                   }
-
+			//yessss
 		  p = get_path();
            /***/
 		  tmp = p;
 		  while (tmp) {      // print list of paths
-		    printf("path [%s]\n", tmp->element);
+		    //printf("path [%s]\n", tmp->element);
 		    tmp = tmp->next;
                   }
            /***/
@@ -100,7 +100,52 @@ main(int argc, char **argv, char **envp)
 				printf("Executing built-in [exit]\n");
 				exit(0);
 			}
-			 
+		else if (strcmp(arg[0], "where") == 0) { // built-in command where
+		  struct pathelement *p, *tmp;
+                  char **cmd;
+                    
+		  printf("Executing built-in [where]\n");
+
+		  
+
+		  if (arg[1] == NULL) {  // "empty" where
+		    printf("where: Too few arguments.\n");
+		    goto nextprompt;
+                  }
+			//yessss
+		  p = get_path();
+           /***/
+		  tmp = p;
+		  int i = 0;
+		  while (tmp) {      // print list of paths
+		    //printf("path [%s]\n", tmp->element);
+		    tmp = tmp->next;
+			i++;
+                  }
+           /***/
+		   //printf("%i\n",i);
+			int count = 1;
+                  cmd = where(arg[1], p);
+				  //printf("size of cmd: %i\n",(int)cmd[0][0] - 48);
+				  while(count <= cmd[0][0] - 48) {
+					  printf("%s\n",cmd[count]);
+					  //printf("%s\n",cmd[2]);
+					  count++;
+				  }
+                  if (cmd) {
+		    		//printf("%s\n", cmd);
+                    free(cmd);
+                  }
+		  else               // argument not found
+		    printf("%s: Command not found\n", arg[1]);
+
+		  while (p) {   // free list of path values
+		     tmp = p;
+		     p = p->next;
+		     free(tmp->element);
+		     free(tmp);
+                  }
+	    }	 
 		else {  // external command
 		  if ((pid = fork()) < 0) {
 			printf("fork error");
