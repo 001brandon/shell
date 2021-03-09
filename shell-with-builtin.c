@@ -7,6 +7,8 @@
 #include <sys/wait.h>
 #include "sh.h"
 
+extern char **environ;
+
 void sig_handler(int sig)
 {
   fprintf(stdout, "\n>> ");
@@ -168,7 +170,47 @@ main(int argc, char **argv, char **envp)
 			printf("Executing built-in [pid]\n");
 			printf("The PID of this process is %d\n",getpid());
 		    //goto nextprompt;
+		} else if (strcmp(arg[0], "kill") == 0) {
+			printf("Executing built-in [kill]\n");
+			if (arg[1] == NULL) {  // "empty" kill
+		    	printf("kill: Too few arguments.\n");
+		    	goto nextprompt;
+            } else if(arg[1][0]=='-'){
+				if(arg[2]==NULL){
+					printf("kill: Too few arguments. Did not include second argument for PID\n");
+		    		goto nextprompt;
+				}
+				int sigUse=atoi(arg[2]);
+				char *sigInput=arg[1];
+				char* arg1=strtok(sigInput,"-");
+				int option = atoi(arg1);
+				if(option < 0 || option > 36) {
+					printf("Not a valid option\n");
+				}
+				else{
+					printf("Kill signal is: %i\n",option);
+					kill(sigUse,option);
+				}	
+			}
+			else {
+				int sigUse=atoi(arg[1]);
+				kill(sigUse,15);
+			}
+			
+		    //goto nextprompt;
 		}
+
+		else if (strcmp(arg[0], "printenv") == 0) {
+			printf("Executing built-in [printenv]\n");
+			int index=0;
+			while(environ[index]!=NULL){
+				printf("%s\n",environ[index]);
+				index++;
+			}
+
+
+		}
+
 		else {  // external command
 		  if ((pid = fork()) < 0) {
 			printf("fork error");
