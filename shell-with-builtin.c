@@ -202,13 +202,22 @@ main(int argc, char **argv, char **envp)
 
 		else if (strcmp(arg[0], "printenv") == 0) {
 			printf("Executing built-in [printenv]\n");
-			int index=0;
-			while(environ[index]!=NULL){
-				printf("%s\n",environ[index]);
-				index++;
+			if(arg[2] != NULL) {
+				printf("printenv: Too many arguments.\n");
+				goto nextprompt;	
 			}
-
-
+			else {
+				if(arg[1]==NULL){
+					int index=0;
+					while(environ[index]!=NULL){
+						printf("%s\n",environ[index]);
+						index++;
+					}
+				} 
+				else {
+					printf("Enviornment of %s is: %s\n",arg[1],getenv(arg[1]));
+				}
+			}
 		}
 
 		else {  // external command
