@@ -231,10 +231,12 @@ main(int argc, char **argv, char **envp)
 			char    **p;
 			struct pathelement *path, *tmp;
 
-			for(int looper=0; looper<arg_no; looper++){
+			/*for(int looper=0; looper<arg_no; looper++){
 				execargs[looper]=malloc(strlen(arg[looper])+1);
 				strcpy(execargs[looper], arg[looper]);
-			} //copy all the args into exec args
+			}*/
+			
+			 //copy all the args into exec args
 			//execargs[0] = malloc(strlen(arg[0])+1);
 			//strcpy(execargs[0], arg[0]);  // copy command
 		        j = 1;
@@ -255,9 +257,13 @@ main(int argc, char **argv, char **envp)
 
 			i = 0;
 			//char *const envp[2]={"PATH=/bin",NULL};
-             for (i = 0; i < arg_no; i++)
-			  printf("exec arg [%s]\n", execargs[i]);
-			execve(execargs[0], execargs, NULL);
+            for (i = 0; i < arg_no; i++)
+			  printf("exec arg [%s]\n", arg[i]);
+			if(arg[0][0]=='/'){
+				execve(arg[0], arg, NULL);  //changed execargs to just args
+			} else {
+
+			}
 			//execvp(execargs[0],execargs); //Use this to execute with respect to
 			//here is a test
 			printf("couldn't execute: %s", buf);
