@@ -47,10 +47,3 @@ struct pathelement *get_path()
 } /* end get_path() */
 
 
-void showprompt(){
-    char *cwd=getcwd(NULL,0);
-	fprintf(stdout, "%s $: ",cwd);	/* print prompt (printf requires %% to print %) */
-	free(cwd);
-    fflush(stdout);
-    return;
-}

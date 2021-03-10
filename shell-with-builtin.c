@@ -8,6 +8,7 @@
 #include "sh.h"
 
 extern char **environ;
+char	prefix[MAXLINE];
 
 void sig_handler(int sig)
 {
@@ -148,11 +149,10 @@ main(int argc, char **argv, char **envp)
 		     free(tmp);
                   }
 	    }	
-		else if (strcmp(arg[0], "cd") == 0) {
+		else if (strcmp(arg[0], "cd") == 0) {   //ADD HYPHEN FUNCTIONALITY
 			printf("Executing built-in [cd]\n");
-			if (arg[1] == NULL) {  // "empty" cd
-		    	printf("cd: Too few arguments.\n");
-		    	goto nextprompt;
+			if (arg[1] == NULL || arg[1][0] == '~') {  // goes to HOME directory
+		    	cd(getenv("HOME"));
             }
 			cd(arg[1]);
 		}
@@ -202,7 +202,7 @@ main(int argc, char **argv, char **envp)
 
 		else if (strcmp(arg[0], "printenv") == 0) {
 			printf("Executing built-in [printenv]\n");
-			if(arg[2] != NULL) {
+			if(arg[1] != NULL && arg[2] != NULL) {
 				printf("printenv: Too many arguments.\n");
 				goto nextprompt;	
 			}
@@ -218,6 +218,48 @@ main(int argc, char **argv, char **envp)
 					printf("Enviornment of %s is: %s\n",arg[1],getenv(arg[1]));
 				}
 			}
+		}
+		else if (strcmp(arg[0], "setenv") == 0) {  //come back to this update path linked list
+			printf("Executing built-in [setenv]\n");
+			const char* empty=" ";
+			if(arg[3] != NULL) {
+				printf("setenv: Too many arguments.\n");
+			}
+			else if(arg[1]==NULL){
+				int index=0;
+				while(environ[index]!=NULL){
+					printf("%s\n",environ[index]);
+					index++;
+				} 
+			}
+			else if(arg[2]==NULL){
+				setenv(arg[1],empty,0);
+			} else{
+				setenv(arg[1],arg[2],1);
+			}
+			
+
+		}
+
+		else if (strcmp(arg[0], "prompt") == 0) {
+			printf("Executing built-in [prompt]\n");
+			int leave=0;
+			while(arg[1]==NULL && leave==0){
+				printf("Enter a prompt: ");
+				//scanf("%s",prefix);
+				fgets(prefix,MAXLINE,stdin);
+				if(strcmp(prefix,"\n")!=0){
+					leave=1;
+					prefix[strlen(prefix)-1]='\0';
+				}
+			}
+			if(arg[1]!=NULL) {
+				strcpy(prefix,arg[1]);
+			}
+			//goto nextprompt;
+
+
+
 		}
 
 		else {  // external command
@@ -283,4 +325,12 @@ main(int argc, char **argv, char **envp)
 		showprompt();
 	}
 	exit(0);
+}
+
+void showprompt(){
+    char *cwd=getcwd(NULL,0);
+	fprintf(stdout, "%s [%s] $: ",prefix,cwd);	/* print prompt (printf requires %% to print %) */
+	free(cwd);
+    fflush(stdout);
+    return;
 }
