@@ -149,12 +149,20 @@ main(int argc, char **argv, char **envp)
 		     free(tmp);
                   }
 	    }	
-		else if (strcmp(arg[0], "cd") == 0) {   //ADD HYPHEN FUNCTIONALITY
+		else if (strcmp(arg[0], "cd") == 0) {   
 			printf("Executing built-in [cd]\n");
 			if (arg[1] == NULL || arg[1][0] == '~') {  // goes to HOME directory
 		    	cd(getenv("HOME"));
             }
+			if (strcmp(arg[1],"-")==0){
+				char *newstring=getcwd(NULL,0);
+				cd(getenv("OLDPWD"));
+				printf("%s\n",getenv("OLDPWD"));
+				setenv("OLDPWD",newstring,1);
+				free(newstring);
+			} else {
 			cd(arg[1]);
+			}
 		}
 		else if (strcmp(arg[0], "list") == 0) {
 			printf("Executing built-in [list]\n");
