@@ -7,7 +7,9 @@
 #include <sys/wait.h>
 #include "sh.h"
 
+
 extern char **environ;
+
 char	prefix[MAXLINE];
 
 void sig_handler(int sig)
@@ -68,9 +70,6 @@ main(int argc, char **argv, char **envp)
                   char *cmd;
                     
 		  printf("Executing built-in [which]\n");
-
-		  
-
 		  if (arg[1] == NULL) {  // "empty" which
 		    printf("which: Too few arguments.\n");
 		    goto nextprompt;
@@ -105,7 +104,9 @@ main(int argc, char **argv, char **envp)
 			}
 		else if (strcmp(arg[0], "where") == 0) { // built-in command where
 		  struct pathelement *p, *tmp;
-                  char **cmd;
+                  //char **cmd;
+				  char *cmd;
+			int pathNum = 0;
 		  printf("Executing built-in [where]\n");
 		  if (arg[1] == NULL) {  // "empty" where
 		    printf("where: Too few arguments.\n");
@@ -123,22 +124,38 @@ main(int argc, char **argv, char **envp)
             }
            /***/
 		   //printf("%i\n",i);
-			int count = 1;
-				cmd = where(arg[1], p);
-				if(cmd != NULL){
-					while(count <= cmd[0][0] - 48) {
-						printf("%s\n",cmd[count]);
-						//printf("%s\n",cmd[2]);
-						count++;
-					}
+		   cmd = where(arg[1],p,pathNum);
+			if(cmd) {
+				while(cmd) {
+					printf("%s\n", cmd);
+                	free(cmd);
+					pathNum++;
+					cmd = where(arg[1],p,pathNum);
 				}
-				if (cmd) {
-				//printf("%s\n", cmd);
-				free(cmd);
-				}
-		  else               // argument not found
-		    printf("%s: Command not found\n", arg[1]);
-
+			}
+			else{
+				printf("%s: Command not found\n", arg[1]);
+			}
+						/*
+							int count = 1;
+								cmd = where(arg[1], p);
+								if(cmd != NULL){
+									while(count <= cmd[0][0] - 48) {
+										printf("%s\n",cmd[count]);
+										//printf("%s\n",cmd[2]);
+										count++;
+									}
+								}
+								if (cmd) {
+									for(i = 0; i < cmd[0][0] - 48; i++) {
+										free(cmd[i]);
+									}
+								//printf("%s\n", cmd);
+								free(cmd);
+								}
+						else               // argument not found
+							printf("%s: Command not found\n", arg[1]);
+							*/
 		  while (p) {   // free list of path values
 		     tmp = p;
 		     p = p->next;

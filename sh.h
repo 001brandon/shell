@@ -2,7 +2,8 @@
 
 int pid;
 char *which(char *command, struct pathelement *pathlist);
-char **where(char *command, struct pathelement *pathlist);
+char *where(char *command, struct pathelement *pathlist, int pathNum);
+//char *whereNew(char *command, struct pathelement *p, int pathNum)
 //void list(char *dir);
 void printenv(char **envp);
 void showprompt();
