@@ -106,11 +106,7 @@ main(int argc, char **argv, char **envp)
 		else if (strcmp(arg[0], "where") == 0) { // built-in command where
 		  struct pathelement *p, *tmp;
                   char **cmd;
-                    
 		  printf("Executing built-in [where]\n");
-
-		  
-
 		  if (arg[1] == NULL) {  // "empty" where
 		    printf("where: Too few arguments.\n");
 		    goto nextprompt;
@@ -121,24 +117,25 @@ main(int argc, char **argv, char **envp)
 		  tmp = p;
 		  int i = 0;
 		  while (tmp) {      // print list of paths
-		    //printf("path [%s]\n", tmp->element);
+			//printf("path [%s]\n", tmp->element);
 		    tmp = tmp->next;
 			i++;
-                  }
+            }
            /***/
 		   //printf("%i\n",i);
 			int count = 1;
-                  cmd = where(arg[1], p);
-				  //printf("size of cmd: %i\n",(int)cmd[0][0] - 48);
-				  while(count <= cmd[0][0] - 48) {
-					  printf("%s\n",cmd[count]);
-					  //printf("%s\n",cmd[2]);
-					  count++;
-				  }
-                  if (cmd) {
-		    		//printf("%s\n", cmd);
-                    free(cmd);
-                  }
+				cmd = where(arg[1], p);
+				if(cmd != NULL){
+					while(count <= cmd[0][0] - 48) {
+						printf("%s\n",cmd[count]);
+						//printf("%s\n",cmd[2]);
+						count++;
+					}
+				}
+				if (cmd) {
+				//printf("%s\n", cmd);
+				free(cmd);
+				}
 		  else               // argument not found
 		    printf("%s: Command not found\n", arg[1]);
 
@@ -230,7 +227,7 @@ main(int argc, char **argv, char **envp)
 		else if (strcmp(arg[0], "setenv") == 0) {  //come back to this update path linked list
 			printf("Executing built-in [setenv]\n");
 			const char* empty=" ";
-			if(arg[3] != NULL) {
+			if(arg[1] != NULL && arg[2] != NULL && arg[3] != NULL) {
 				printf("setenv: Too many arguments.\n");
 			}
 			else if(arg[1]==NULL){
@@ -241,7 +238,7 @@ main(int argc, char **argv, char **envp)
 				} 
 			}
 			else if(arg[2]==NULL){
-				setenv(arg[1],empty,0);
+				setenv(arg[1],empty,1);  //I changed this to overwrite = 1 because that's how it works in tcsh
 			} else{
 				setenv(arg[1],arg[2],1);
 			}

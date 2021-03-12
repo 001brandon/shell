@@ -40,7 +40,7 @@ char **where(char *command, struct pathelement *p)
     }
     tmp = tmp->next;
   }
-  printf("number of paths: %i\n",i);
+  //printf("number of paths: %i\n",i);
   ch = malloc(i*sizeof(char *)+2);
   ch[0] = malloc(sizeof(char)+1);
   char rows[1];
