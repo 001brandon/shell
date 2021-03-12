@@ -288,17 +288,18 @@ main(int argc, char **argv, char **envp)
 		  if ((pid = fork()) < 0) {
 			printf("fork error");
 		  } else if (pid == 0) {		/* child */
-			                // an array of aguments for execve()
+			                // an array of arguments for execve()
 	                char    *execargs[MAXARGS]; 
 		        glob_t  paths;
                         int     csource, j;
 			char    **p;
 			struct pathelement *path, *tmp;
 
-			/*for(int looper=0; looper<arg_no; looper++){
+			for(int looper=0; looper<arg_no; looper++){
 				execargs[looper]=malloc(strlen(arg[looper])+1);
 				strcpy(execargs[looper], arg[looper]);
-			}*/
+			}
+			execargs[arg_no]=NULL;
 			
 			 //copy all the args into exec args
 			//execargs[0] = malloc(strlen(arg[0])+1);
@@ -324,10 +325,33 @@ main(int argc, char **argv, char **envp)
             for (i = 0; i < arg_no; i++)
 			  printf("exec arg [%s]\n", arg[i]);
 			if(arg[0][0]=='/'){
-				execve(arg[0], arg, NULL);  //changed execargs to just args
+				execve(execargs[0], execargs, NULL);  //changed execargs to just args
 			} else {
+				char *cmd;
+				struct pathelement *p, *tmp;
+				p = get_path();
 
-			}
+
+				cmd = which(execargs[0], p);
+				if(cmd){
+					printf("CMD IS: %s\n",cmd);
+				}
+				else{              // argument not found
+					printf("%s: Command not found\n", execargs[0]);
+					exit(-8);
+				}
+				while (p) {   // free list of path values
+					tmp = p;
+					p = p->next;
+					free(tmp->element);
+					free(tmp);
+						}
+				execargs[0]=realloc(execargs[0],strlen(cmd)+1);
+				strcpy(execargs[0],cmd);
+				free(cmd);
+				execve(execargs[0],execargs,NULL);
+				}
+
 			//execvp(execargs[0],execargs); //Use this to execute with respect to
 			//here is a test
 			printf("couldn't execute: %s", buf);
