@@ -299,31 +299,35 @@ main(int argc, char **argv, char **envp)
 				execargs[looper]=malloc(strlen(arg[looper])+1);
 				strcpy(execargs[looper], arg[looper]);
 			}
-			execargs[arg_no]=NULL;
+					//execargs[arg_no]=NULL; //NEED TO MOVE THIS UNTIL AFTER WILDCARD
 			
 			 //copy all the args into exec args
 			//execargs[0] = malloc(strlen(arg[0])+1);
 			//strcpy(execargs[0], arg[0]);  // copy command
-		        j = 1;
-		      for (i = 1; i < arg_no; i++) // check arguments
-			  if (strchr(arg[i], '*') != NULL) { // wildcard!
+		    j = 1;
+		    for (i = 1; i < arg_no; i++) // check arguments
+			if (strchr(arg[i], '*') != NULL) { // wildcard!
 			    csource = glob(arg[i], 0, NULL, &paths);
-                            if (csource == 0) {
-                              for (p = paths.gl_pathv; *p != NULL; ++p) {
-                                execargs[j] = malloc(strlen(*p)+1);
-				strcpy(execargs[j], *p);
-				j++;
-                              }
-                           
-                              globfree(&paths);
-                            }
-                          }
+				if (csource == 0) {
+					for (p = paths.gl_pathv; *p != NULL; ++p) {
+						execargs[i] = malloc(strlen(*p)+1);
+						strcpy(execargs[i], *p);
+						//printf("execargs[j] is: %s ",execargs[i]);
+						i++;
+						//printf("p is : %s\n"/*,execargs[j]*/,*p);
+					}     
+					globfree(&paths);
+				}
+				arg_no = i-1;
+				execargs[arg_no+1] = NULL;
+            }
+			execargs[i] = NULL;
+			
                         //execargs[j] = NULL;   // I dont know what this does
-
 			i = 0;
 			//char *const envp[2]={"PATH=/bin",NULL};
             for (i = 0; i < arg_no; i++)
-			  printf("exec arg [%s]\n", arg[i]);
+			  printf("exec arg [%s]\n", execargs[i]);
 			if(arg[0][0]=='/'){
 				execve(execargs[0], execargs, NULL);  //changed execargs to just args
 			} else {
