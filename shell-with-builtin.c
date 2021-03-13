@@ -168,13 +168,14 @@ main(int argc, char **argv, char **envp)
 			if (arg[1] == NULL || arg[1][0] == '~') {  // goes to HOME directory
 		    	cd(getenv("HOME"));
             }
-			if (strcmp(arg[1],"-")==0){
+			else if (strcmp(arg[1],"-")==0){
 				char *newstring=getcwd(NULL,0);
 				cd(getenv("OLDPWD"));
 				printf("%s\n",getenv("OLDPWD"));
 				setenv("OLDPWD",newstring,1);
 				free(newstring);
-			} else {
+			} 
+			else {
 			cd(arg[1]);
 			}
 		}
