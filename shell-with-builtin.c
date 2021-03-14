@@ -351,8 +351,11 @@ main(int argc, char **argv, char **envp)
 					globfree(&paths);
 				}
 				else{
+					for(int looper=0; looper<arg_no; looper++){
+						free(execargs[looper]);
+					}
 					printf("%s: No match.\n",arg[0]);
-					goto nextprompt;
+					exit(-8);
 				}
 				arg_no = i-1;
 				execargs[arg_no+1] = NULL;
