@@ -16,8 +16,8 @@ void sig_handler(int sig)
 	if(sig==SIGINT){
 		//kill(0,SIGINT);
 	} 
-	printf("\n");
-  	showprompt();
+	//printf("\n");
+  	//showprompt();
 }
   
 int
@@ -89,14 +89,19 @@ main(int argc, char **argv, char **envp)
 		    tmp = tmp->next;
                   }
            /***/
-
-                  cmd = which(arg[1], p);
-                  if (cmd) {
+		   int testcounter=1;
+			while(arg[testcounter]!=NULL){
+            cmd = which(arg[testcounter], p);
+            if (cmd) {
 		    printf("%s\n", cmd);
                     free(cmd);
                   }
-		  else               // argument not found
-		    printf("%s: Command not found\n", arg[1]);
+		  else {              // argument not found
+		    printf("%s: Command not found\n", arg[testcounter]);
+		  }
+			p=get_path();
+			testcounter++;
+			}
 
 		  while (p) {   // free list of path values
 		     tmp = p;
