@@ -215,7 +215,13 @@ main(int argc, char **argv, char **envp)
 		    	goto nextprompt;
             }
 			else {
-				list(arg[1]);			
+				int testcounter=1;
+				while(arg[testcounter]!=NULL){
+					list(arg[testcounter]);
+					testcounter++;
+
+				}
+					
 			}
 		}
 		else if (strcmp(arg[0], "pid") == 0) {
