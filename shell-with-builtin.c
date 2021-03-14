@@ -350,6 +350,10 @@ main(int argc, char **argv, char **envp)
 					}     
 					globfree(&paths);
 				}
+				else{
+					printf("%s: No match.\n",arg[0]);
+					goto nextprompt;
+				}
 				arg_no = i-1;
 				execargs[arg_no+1] = NULL;
             }
