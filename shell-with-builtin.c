@@ -16,12 +16,6 @@ void sig_handler(int sig)
 	if(sig==SIGINT){
 		//kill(0,SIGINT);
 	} 
-	else if(sig==SIGTERM){
-
-	}
-	else if(sig==SIGTSTP){
-		
-	}
 	printf("\n");
   	showprompt();
 }
@@ -32,19 +26,17 @@ main(int argc, char **argv, char **envp)
 	char	buf[MAXLINE];
 	char    *arg[MAXARGS];  // an array of tokens
 	char    *ptr;
+	char *usrInput;
         char    *pch;
 	pid_t	pid;
 	int	status, i, arg_no;
-	
-
-	if(pid != 0){  //child doesnt get immunity to signals
-		signal(SIGINT, sig_handler);
-		signal(SIGTSTP, sig_handler);
-		signal(SIGTERM, sig_handler);
-	}
-
+	int ignoreeof=3;
+	signal(SIGTSTP, SIG_IGN); 
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, SIG_IGN);
+	RESTART:
 	showprompt();
-	while (fgets(buf, MAXLINE, stdin) != NULL) {
+	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {
 		if (strlen(buf) == 1 && buf[strlen(buf) - 1] == '\n')
 		  goto nextprompt;  // "empty" command line
 
@@ -135,7 +127,27 @@ main(int argc, char **argv, char **envp)
             }
            /***/
 		   //printf("%i\n",i);
-		   cmd = where(arg[1],p,pathNum);
+		   int testcase=1;
+		   while (arg[testcase]!=NULL) {
+			cmd = where(arg[testcase],p,pathNum);
+			if(cmd) {
+				while(cmd) {
+					printf("%s\n", cmd);
+                	free(cmd);
+					pathNum++;
+					cmd = where(arg[testcase],p,pathNum);
+				}
+			}
+			else{
+				printf("%s: Command not found\n", arg[1]);
+				//break;
+			}
+			   testcase++;
+			   	p=get_path();
+				pathNum=0;
+		   }
+		   
+		   /*cmd = where(arg[1],p,pathNum);
 			if(cmd) {
 				while(cmd) {
 					printf("%s\n", cmd);
@@ -143,30 +155,28 @@ main(int argc, char **argv, char **envp)
 					pathNum++;
 					cmd = where(arg[1],p,pathNum);
 				}
+
 			}
 			else{
 				printf("%s: Command not found\n", arg[1]);
 			}
-						/*
-							int count = 1;
-								cmd = where(arg[1], p);
-								if(cmd != NULL){
-									while(count <= cmd[0][0] - 48) {
-										printf("%s\n",cmd[count]);
-										//printf("%s\n",cmd[2]);
-										count++;
-									}
-								}
-								if (cmd) {
-									for(i = 0; i < cmd[0][0] - 48; i++) {
-										free(cmd[i]);
-									}
-								//printf("%s\n", cmd);
-								free(cmd);
-								}
-						else               // argument not found
-							printf("%s: Command not found\n", arg[1]);
-							*/
+			p=get_path();
+			pathNum=0;
+			cmd = where(arg[2],p,pathNum);
+			if(cmd) {
+				while(cmd) {
+					printf("%s\n", cmd);
+                	free(cmd);
+					pathNum++;
+					cmd = where(arg[2],p,pathNum);
+				}
+
+			}
+			else{
+				printf("%s: Command not found\n", arg[2]);
+			}
+			*/
+
 		  while (p) {   // free list of path values
 		     tmp = p;
 		     p = p->next;
@@ -395,6 +405,11 @@ main(int argc, char **argv, char **envp)
 
            nextprompt:
 		showprompt();
+	}
+	if(usrInput==NULL){
+		printf("^D\n");
+    	printf("Use \"exit\" to leave shell.\n");
+		goto RESTART;
 	}
 	exit(0);
 }
