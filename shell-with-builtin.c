@@ -155,35 +155,6 @@ main(int argc, char **argv, char **envp)
 				pathNum=0;
 		   }
 		   
-		   /*cmd = where(arg[1],p,pathNum);
-			if(cmd) {
-				while(cmd) {
-					printf("%s\n", cmd);
-                	free(cmd);
-					pathNum++;
-					cmd = where(arg[1],p,pathNum);
-				}
-
-			}
-			else{
-				printf("%s: Command not found\n", arg[1]);
-			}
-			p=get_path();
-			pathNum=0;
-			cmd = where(arg[2],p,pathNum);
-			if(cmd) {
-				while(cmd) {
-					printf("%s\n", cmd);
-                	free(cmd);
-					pathNum++;
-					cmd = where(arg[2],p,pathNum);
-				}
-
-			}
-			else{
-				printf("%s: Command not found\n", arg[2]);
-			}
-			*/
 
 		  while (p) {   // free list of path values
 		     tmp = p;
@@ -345,11 +316,6 @@ main(int argc, char **argv, char **envp)
 				execargs[looper]=malloc(strlen(arg[looper])+1);
 				strcpy(execargs[looper], arg[looper]);
 			}
-					//execargs[arg_no]=NULL; //NEED TO MOVE THIS UNTIL AFTER WILDCARD
-			
-			 //copy all the args into exec args
-			//execargs[0] = malloc(strlen(arg[0])+1);
-			//strcpy(execargs[0], arg[0]);  // copy command
 		    j = 1;
 		    for (i = 1; i < arg_no; i++) // check arguments
 			if (strchr(arg[i], '*') != NULL) { // wildcard!
@@ -408,9 +374,6 @@ main(int argc, char **argv, char **envp)
 				free(cmd);
 				execve(execargs[0],execargs,NULL);
 				}
-
-			//execvp(execargs[0],execargs); //Use this to execute with respect to
-			//here is a test
 			printf("couldn't execute: %s", buf);
 			exit(127);
 		  }
@@ -418,10 +381,6 @@ main(int argc, char **argv, char **envp)
 		  /* parent */
 		  if ((pid = waitpid(pid, &status, 0)) < 0)
 			printf("waitpid error");
-/**
-                  if (WIFEXITED(status)) S&R p. 239 
-                    printf("child terminates with (%d)\n", WEXITSTATUS(status));
-**/
                 }
 
            nextprompt:
