@@ -34,6 +34,9 @@ main(int argc, char **argv, char **envp)
 	signal(SIGTSTP, SIG_IGN); 
 	signal(SIGINT, sig_handler);
 	signal(SIGTERM, SIG_IGN);
+	char *initPWD=getcwd(NULL,0);
+	setenv("OLDPWD",initPWD,1);
+	free(initPWD);
 	RESTART:
 	showprompt();
 	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {
