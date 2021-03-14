@@ -7,15 +7,23 @@
 #include <sys/wait.h>
 #include "sh.h"
 
-
 extern char **environ;
 
 char	prefix[MAXLINE];
 
 void sig_handler(int sig)
 {
-  fprintf(stdout, "\n>> ");
-  fflush(stdout);
+	if(sig==SIGINT){
+		//kill(0,SIGINT);
+	} 
+	else if(sig==SIGTERM){
+
+	}
+	else if(sig==SIGTSTP){
+		
+	}
+	printf("\n");
+  	showprompt();
 }
   
 int
@@ -29,8 +37,11 @@ main(int argc, char **argv, char **envp)
 	int	status, i, arg_no;
 	
 
-
-        signal(SIGINT, sig_handler);
+	if(pid != 0){  //child doesnt get immunity to signals
+		signal(SIGINT, sig_handler);
+		signal(SIGTSTP, sig_handler);
+		signal(SIGTERM, sig_handler);
+	}
 
 	showprompt();
 	while (fgets(buf, MAXLINE, stdin) != NULL) {
@@ -284,6 +295,16 @@ main(int argc, char **argv, char **envp)
 
 
 		}
+		else if (strcmp(arg[0], "Timer.sh") == 0) {
+			if ((pid = fork()) < 0) {
+			printf("fork error");
+		  } else if (pid == 0) {
+			  execve(arg[0],arg,NULL);
+		}
+		if ((pid = waitpid(pid, &status, 0)) < 0)
+			printf("waitpid error");
+
+		}
 
 		else {  // external command
 		  if ((pid = fork()) < 0) {
@@ -385,3 +406,4 @@ void showprompt(){
     fflush(stdout);
     return;
 }
+
