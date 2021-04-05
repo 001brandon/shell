@@ -1,4 +1,5 @@
 #include "get_path.h"
+#include "linked.h"
 
 int pid;
 char *which(char *command, struct pathelement *pathlist);

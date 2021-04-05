@@ -1,8 +1,8 @@
 CC=gcc
 # CC=gcc -Wall
 
-mysh: get_path.o which.o shell-with-builtin.o cd.o list.o
-	$(CC) -g shell-with-builtin.c get_path.o which.o cd.o list.o -o mysh
+mysh: get_path.o which.o shell-with-builtin.o cd.o list.o linked.o
+	$(CC) -g shell-with-builtin.c get_path.o which.o cd.o list.o linked.o -o mysh
 
 shell-with-builtin.o: shell-with-builtin.c  sh.h 
 	$(CC) -g -c shell-with-builtin.c
@@ -19,5 +19,7 @@ cd.o: cd.c sh.h
 list.o: list.c sh.h
 	$(CC) -g -c list.c
 
+linked.o: linked.c linked.h
+	$(CC) -g -c linked.c
 clean:
 	rm -rf shell-with-builtin.o get_path.o which.o cd.o list.o mysh

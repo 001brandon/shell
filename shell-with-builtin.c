@@ -30,10 +30,15 @@ main(int argc, char **argv, char **envp)
         char    *pch;
 	pid_t	pid;
 	int	status, i, arg_no;
-	int ignoreeof=3;
-	signal(SIGTSTP, SIG_IGN); 
-	signal(SIGINT, sig_handler);
-	signal(SIGTERM, SIG_IGN);
+	int *pid_list=malloc(sizeof(int));
+	struct node *n, *head;
+	int childPID;
+	int isBackground=0;
+	head=NULL;
+	n=head;
+	//signal(SIGTSTP, SIG_IGN); 
+	//signal(SIGINT, sig_handler);
+	//signal(SIGTERM, SIG_IGN);
 	char *initPWD=getcwd(NULL,0);
 	setenv("OLDPWD",initPWD,1);
 	free(initPWD);
@@ -290,18 +295,13 @@ main(int argc, char **argv, char **envp)
 
 
 		}
-		else if (strcmp(arg[0], "Timer.sh") == 0) {
-			if ((pid = fork()) < 0) {
-			printf("fork error");
-		  } else if (pid == 0) {
-			  execve(arg[0],arg,NULL);
-		}
-		if ((pid = waitpid(pid, &status, 0)) < 0)
-			printf("waitpid error");
-
-		}
 
 		else {  // external command
+		if(strcmp(arg[arg_no-1],"&")==0){
+				arg_no=arg_no-1;
+				isBackground=1;
+				printf("HIT\n");
+		}
 		  if ((pid = fork()) < 0) {
 			printf("fork error");
 		  } else if (pid == 0) {		/* child */
@@ -311,7 +311,6 @@ main(int argc, char **argv, char **envp)
                         int     csource, j;
 			char    **p;
 			struct pathelement *path, *tmp;
-
 			for(int looper=0; looper<arg_no; looper++){
 				execargs[looper]=malloc(strlen(arg[looper])+1);
 				strcpy(execargs[looper], arg[looper]);
@@ -372,6 +371,7 @@ main(int argc, char **argv, char **envp)
 				execargs[0]=realloc(execargs[0],strlen(cmd)+1);
 				strcpy(execargs[0],cmd);
 				free(cmd);
+
 				execve(execargs[0],execargs,NULL);
 				}
 			printf("couldn't execute: %s", buf);
@@ -379,12 +379,30 @@ main(int argc, char **argv, char **envp)
 		  }
 
 		  /* parent */
-		  if ((pid = waitpid(pid, &status, 0)) < 0)
+		  if(isBackground==1){
+			  insert(pid);
+			  isBackground=0;
+		  }
+		  else if ((pid = waitpid(pid, &status, 0)) < 0)
 			printf("waitpid error");
+			//pid[arraynumber] = (int)pid;
                 }
 
            nextprompt:
-		showprompt();
+		//showprompt();
+			node *temp=head;
+			while(temp!=NULL){
+			if ((waitpid(temp->data, &status, WNOHANG)) > 0){
+				delete(temp->data);
+			}
+				temp=temp->next;
+			}
+			display(n);
+			display(n);
+			char *cwd=getcwd(NULL,0);
+			fprintf(stdout, "%s [%s] $: ",prefix,cwd);	/* print prompt (printf requires %% to print %) */
+			free(cwd);
+			fflush(stdout);
 	}
 	if(usrInput==NULL){
 		printf("^D\n");
@@ -401,4 +419,7 @@ void showprompt(){
     fflush(stdout);
     return;
 }
+
+
+//work on zombie
 
