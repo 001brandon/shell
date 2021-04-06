@@ -11,16 +11,28 @@ extern char **environ;
 
 char	prefix[MAXLINE];
 
+int calledFg = 0;
+
+int fgNum;
+
+struct node *temp, *n;
+
 void sig_handler(int sig)
 {
 	if(sig==SIGINT){
+		if(calledFg) {
+			temp = head;
+			for (int i = 0; i < fgNum - 1;i++) {
+				temp = temp->next;
+			}
+			kill(temp->data,2);
+		}
 		//kill(0,SIGINT);
 	} 
 	//printf("\n");
   	//showprompt();
 }
 
-struct node *temp, *n;
 int status;
   
 int
@@ -36,17 +48,20 @@ main(int argc, char **argv, char **envp)
 	int *pid_list=malloc(sizeof(int));
 	int childPID;
 	int isBackground=0;
+	int shellPid = getpid();
+	setpgid(shellPid,shellPid);
 	head=NULL;
 	n=head;
-	//signal(SIGTSTP, SIG_IGN); 
-	//signal(SIGINT, sig_handler);
-	//signal(SIGTERM, SIG_IGN);
+	signal(SIGTSTP, SIG_IGN); 
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, SIG_IGN);
 	char *initPWD=getcwd(NULL,0);
 	setenv("OLDPWD",initPWD,1);
 	free(initPWD);
 	RESTART:
 	showprompt();
 	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {
+		calledFg = 0;
 		//reaps child at start of every command
 		temp=head;
 		while(temp!=NULL){
@@ -89,6 +104,31 @@ main(int argc, char **argv, char **envp)
                   printf("%s\n", ptr);
                   free(ptr);
 	        }
+			else if (strcmp(arg[0], "fg") == 0) { // built-in command pwd 
+				printf("Executing built-in [fg]\n");
+				calledFg = 1;
+				if(head != NULL) {
+					if (arg[1] == NULL) { // "empty" fg defaults to first backgrounded job
+						fgNum = 1;
+						printf("sending job number 1 to foreground\n");
+						waitpid(head->data,&status,0);
+						delete(head->data);
+					}
+					else{
+						fgNum = atoi(arg[1]);
+						printf("sending job number %d to foreground\n",fgNum);
+						temp = head;
+						for(int i = 0; i < fgNum - 1;i++){
+							temp = temp->next;
+						}
+						waitpid(temp->data,&status,0);
+						delete(temp->data);
+					}
+				}
+				else{
+					printf("no backgrounded jobs!\n");
+				}
+			}
 		else
                 if (strcmp(arg[0], "which") == 0) { // built-in command which
 		  struct pathelement *p, *tmp;
@@ -130,6 +170,8 @@ main(int argc, char **argv, char **envp)
                   }
 	        } else if(strcmp(arg[0], "exit") == 0) {
 				printf("Executing built-in [exit]\n");
+				freeall();
+				free(pid_list);
 				exit(0);
 			}
 		else if (strcmp(arg[0], "where") == 0) { // built-in command where
@@ -311,9 +353,6 @@ main(int argc, char **argv, char **envp)
 				strcpy(prefix,arg[1]);
 			}
 			//goto nextprompt;
-
-
-
 		}
 
 		else {  // external command
@@ -398,10 +437,13 @@ main(int argc, char **argv, char **envp)
 			exit(127);
 		  }
 
-		  printf("past\n");
-
 		  /* parent */
+		  printf("parent pid: %d\n",getpid());
+		  printf("fd group: %d\n",tcgetpgrp(0));
 		  if(isBackground==1){
+			  childPID = pid;
+			  setpgid(pid,pid);
+				printf("pid: %d\n",pid);
 			  insert(pid);
 			  isBackground=0;
 		  }
