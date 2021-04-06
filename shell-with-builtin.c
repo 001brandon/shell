@@ -19,6 +19,9 @@ void sig_handler(int sig)
 	//printf("\n");
   	//showprompt();
 }
+
+struct node *temp, *n;
+int status;
   
 int
 main(int argc, char **argv, char **envp)
@@ -29,9 +32,8 @@ main(int argc, char **argv, char **envp)
 	char *usrInput;
         char    *pch;
 	pid_t	pid;
-	int	status, i, arg_no;
+	int i, arg_no;
 	int *pid_list=malloc(sizeof(int));
-	struct node *n, *temp;
 	int childPID;
 	int isBackground=0;
 	head=NULL;
@@ -45,6 +47,18 @@ main(int argc, char **argv, char **envp)
 	RESTART:
 	showprompt();
 	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {
+		//reaps child at start of every command
+		temp=head;
+		while(temp!=NULL){
+			if ((waitpid(temp->data, &status, WNOHANG)) > 0){
+				printf("reaped child with pid: %d\n",temp->data);
+				delete(temp->data);
+				temp = head;
+			}
+			else{
+				temp=temp->next;
+			}
+		}
 		if (strlen(buf) == 1 && buf[strlen(buf) - 1] == '\n')
 		  goto nextprompt;  // "empty" command line
 
@@ -384,6 +398,8 @@ main(int argc, char **argv, char **envp)
 			exit(127);
 		  }
 
+		  printf("past\n");
+
 		  /* parent */
 		  if(isBackground==1){
 			  insert(pid);
@@ -423,6 +439,18 @@ main(int argc, char **argv, char **envp)
 }
 
 void showprompt(){
+	temp=head;
+	while(temp!=NULL){
+		if ((waitpid(temp->data, &status, WNOHANG)) > 0){
+			printf("reaped child with pid: %d\n",temp->data);
+			delete(temp->data);
+			temp = head;
+		}
+		else{
+			temp=temp->next;
+		}
+	}
+	display(n);
     char *cwd=getcwd(NULL,0);
 	fprintf(stdout, "%s [%s] $: ",prefix,cwd);	/* print prompt (printf requires %% to print %) */
 	free(cwd);
