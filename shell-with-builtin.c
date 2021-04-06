@@ -5,6 +5,9 @@
 #include <signal.h>
 #include <glob.h>
 #include <sys/wait.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "sh.h"
 
 extern char **environ;
@@ -52,12 +55,13 @@ main(int argc, char **argv, char **envp)
 	setpgid(shellPid,shellPid);
 	head=NULL;
 	n=head;
-	signal(SIGTSTP, SIG_IGN); 
-	signal(SIGINT, sig_handler);
-	signal(SIGTERM, SIG_IGN);
+	//signal(SIGTSTP, SIG_IGN); 
+	//signal(SIGINT, sig_handler);
+	//signal(SIGTERM, SIG_IGN);
 	char *initPWD=getcwd(NULL,0);
 	setenv("OLDPWD",initPWD,1);
 	free(initPWD);
+	int fd[2];
 	RESTART:
 	showprompt();
 	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {
@@ -355,12 +359,14 @@ main(int argc, char **argv, char **envp)
 			//goto nextprompt;
 		}
 
+
 		else {  // external command
 		if(strcmp(arg[arg_no-1],"&")==0){
 				arg_no=arg_no-1;
 				isBackground=1;
-				printf("HIT\n");
 		}
+		//Use redirect here to output file
+		//Check parent vs child process
 		  if ((pid = fork()) < 0) {
 			printf("fork error");
 		  } else if (pid == 0) {		/* child */
@@ -370,6 +376,26 @@ main(int argc, char **argv, char **envp)
                         int     csource, j;
 			char    **p;
 			struct pathelement *path, *tmp;
+
+			if(arg_no >=3){
+				if(strcmp(arg[arg_no-2],">")==0){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT,0600);
+					close(1);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				} //Makes file breaks redirect
+				else if(strcmp(arg[arg_no-2],">&")==0){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT,0600);
+					close(1);
+					dup(fileStatus);
+					close(2);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				} //Makes file breaks redirect
+			}
+
 			for(int looper=0; looper<arg_no; looper++){
 				execargs[looper]=malloc(strlen(arg[looper])+1);
 				strcpy(execargs[looper], arg[looper]);
