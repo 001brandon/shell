@@ -29,6 +29,7 @@ void sig_handler(int sig)
 				temp = temp->next;
 			}
 			kill(temp->data,2);
+			calledFg = 0;
 		}
 		//kill(0,SIGINT);
 	} 
@@ -55,9 +56,9 @@ main(int argc, char **argv, char **envp)
 	setpgid(shellPid,shellPid);
 	head=NULL;
 	n=head;
-	//signal(SIGTSTP, SIG_IGN); 
-	//signal(SIGINT, sig_handler);
-	//signal(SIGTERM, SIG_IGN);
+	signal(SIGTSTP, SIG_IGN); 
+	signal(SIGINT, sig_handler);
+	signal(SIGTERM, SIG_IGN);
 	char *initPWD=getcwd(NULL,0);
 	setenv("OLDPWD",initPWD,1);
 	free(initPWD);
@@ -108,7 +109,7 @@ main(int argc, char **argv, char **envp)
                   printf("%s\n", ptr);
                   free(ptr);
 	        }
-			else if (strcmp(arg[0], "fg") == 0) { // built-in command pwd 
+			else if (strcmp(arg[0], "fg") == 0) { 
 				printf("Executing built-in [fg]\n");
 				calledFg = 1;
 				if(head != NULL) {
@@ -393,7 +394,30 @@ main(int argc, char **argv, char **envp)
 					dup(fileStatus);
 					close(fileStatus);
 					arg_no=arg_no-2;
-				} //Makes file breaks redirect
+				} 
+				else if(strcmp(arg[arg_no-2],">>")==0){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND,0600);
+					close(1);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				} 
+				else if(strcmp(arg[arg_no-2],">>&")==0){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND,0600);
+					close(1);
+					dup(fileStatus);
+					close(2);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else if(strcmp(arg[arg_no-2],"<")==0){
+					int fileStatus=open(arg[arg_no-1],O_RDONLY,0600);
+					close(0);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				} 
 			}
 
 			for(int looper=0; looper<arg_no; looper++){
