@@ -31,7 +31,7 @@ main(int argc, char **argv, char **envp)
 	pid_t	pid;
 	int	status, i, arg_no;
 	int *pid_list=malloc(sizeof(int));
-	struct node *n, *head;
+	struct node *n, *temp;
 	int childPID;
 	int isBackground=0;
 	head=NULL;
@@ -155,6 +155,12 @@ main(int argc, char **argv, char **envp)
 				printf("%s: Command not found\n", arg[1]);
 				//break;
 			}
+			while (p) {   // free list of path values
+		     tmp = p;
+		     p = p->next;
+		     free(tmp->element);
+		     free(tmp);
+                  }
 			   testcase++;
 			   	p=get_path();
 				pathNum=0;
@@ -390,14 +396,17 @@ main(int argc, char **argv, char **envp)
 
            nextprompt:
 		//showprompt();
-			node *temp=head;
+			temp=head;
 			while(temp!=NULL){
-			if ((waitpid(temp->data, &status, WNOHANG)) > 0){
-				delete(temp->data);
+				if ((waitpid(temp->data, &status, WNOHANG)) > 0){
+					printf("reaped child with pid: %d\n",temp->data);
+					delete(temp->data);
+					temp = head;
+				}
+				else{
+					temp=temp->next;
+				}
 			}
-				temp=temp->next;
-			}
-			display(n);
 			display(n);
 			char *cwd=getcwd(NULL,0);
 			fprintf(stdout, "%s [%s] $: ",prefix,cwd);	/* print prompt (printf requires %% to print %) */
@@ -407,6 +416,7 @@ main(int argc, char **argv, char **envp)
 	if(usrInput==NULL){
 		printf("^D\n");
     	printf("Use \"exit\" to leave shell.\n");
+		freopen("/dev/tty", "rw", stdin);
 		goto RESTART;
 	}
 	exit(0);

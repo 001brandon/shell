@@ -3,7 +3,7 @@
 {
     int data;
     struct node *next;
-};
+}*head;
 void append(int num);
 void add( int num );
 void addafter(int num, int loc);
