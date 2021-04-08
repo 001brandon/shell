@@ -587,13 +587,8 @@ main(int argc, char **argv, char **envp)
 							printf("File exists, will no overwrite\n");
 							exit(0);
 						}
-<<<<<<< HEAD
 						}
 					} 
-=======
-					}
-				}
->>>>>>> main
 				else if(strcmp(arg[arg_no-2],">>")==0){
 					if(!noclobberVal){
 						int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND);
