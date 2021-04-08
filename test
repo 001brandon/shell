@@ -1,0 +1,4 @@
+Executing built-in [which]
+/bin/ls
+>: Command not found
+/usr/bin/test
