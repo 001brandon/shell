@@ -54,6 +54,9 @@ main(int argc, char **argv, char **envp)
 	int isBackground=0;
 	int shellPid = getpid();
 	int noclobberVal=0;
+	int stdin_save;
+	int stdout_save;
+	int stderr_save;
 	setpgid(shellPid,shellPid);
 	head=NULL;
 	n=head;
@@ -103,6 +106,123 @@ main(int argc, char **argv, char **envp)
 		for (i = 0; i < arg_no; i++)
 		  printf("arg[%d] = %s\n", i, arg[i]);
                 */
+
+			   //save filestreams so we can reopen later
+		stdin_save = dup(0);
+		stdout_save = dup(1);
+		stderr_save = dup(2);
+
+		//check for redirects
+		if(arg_no >=3){
+			if(strcmp(arg[arg_no-2],">")==0){
+				printf("detected\n");
+				if(!noclobberVal){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
+					close(1);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					int fileStatus=open(arg[arg_no-1],O_RDWR);
+					if(fileStatus==-1){
+						int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
+						close(1);
+						dup(tempfileStatus);
+						close(tempfileStatus);
+						arg_no=arg_no-2;
+					}
+					else{
+						printf("File exists, will no overwrite\n");
+						exit(0);
+					}
+				}
+			}
+			//Makes file breaks redirect
+			else if(strcmp(arg[arg_no-2],">&")==0){
+				if(!noclobberVal){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
+					close(1);
+					dup(fileStatus);
+					close(2);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					int fileStatus=open(arg[arg_no-1],O_RDWR);
+					if(fileStatus==-1){
+						int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
+						close(1);
+						dup(tempfileStatus);
+						close(2);
+						dup(tempfileStatus);
+						close(tempfileStatus);
+						arg_no=arg_no-2;
+					}
+					else{
+						printf("File exists, will no overwrite\n");
+						exit(0);
+					}
+				}
+			}
+			else if(strcmp(arg[arg_no-2],">>")==0){
+				if(!noclobberVal){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND);
+					close(1);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND);
+					if(fileStatus==-1){
+						printf("Will not create a file\n");
+						exit(0);
+					}
+					else{
+						close(1);
+						dup(fileStatus);
+						close(fileStatus);
+						arg_no=arg_no-2;
+					}
+				}
+			} 
+			else if(strcmp(arg[arg_no-2],">>&")==0){
+				if(!noclobberVal){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND);
+					close(1);
+					dup(fileStatus);
+					close(2);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND);
+					if(fileStatus==-1){
+						printf("Will not create a file\n");
+						exit(0);
+					}
+					else{
+						close(1);
+						dup(fileStatus);
+						close(2);
+						dup(fileStatus);
+						close(fileStatus);
+						arg_no=arg_no-2;
+					}
+				}
+			}
+			else if(strcmp(arg[arg_no-2],"<")==0){
+				int fileStatus=open(arg[arg_no-1],O_RDONLY);
+				close(0);
+				dup(fileStatus);
+				close(fileStatus);
+				arg_no=arg_no-2;
+			} 
+		}
+
 
                 if (strcmp(arg[0], "pwd") == 0) { // built-in command pwd 
 		  printf("Executing built-in [pwd]\n");
@@ -253,19 +373,28 @@ main(int argc, char **argv, char **envp)
 			}
 		}
 		else if (strcmp(arg[0], "list") == 0) {
+			char file[255];
 			printf("Executing built-in [list]\n");
-			if (arg[1] == NULL) {  // "empty" list defaults to .
-		    	list(".");
-		    	goto nextprompt;
+			if (arg[1] == NULL || arg[1][0] != '/') {  // "empty" list defaults to .
+			    struct dirent *files;
+				DIR *directory=opendir(".");
+				while ((files = readdir(directory)) != NULL) {
+					printf ("%s\n", files->d_name);
+				}
+				closedir(directory);
+		    	//list(".");
             }
 			else {
 				int testcounter=1;
-				while(arg[testcounter]!=NULL){
-					list(arg[testcounter]);
-					testcounter++;
-
-				}
-					
+				for(int testcounter = 1; testcounter < arg_no; testcounter++) {
+					struct dirent *files;
+					DIR *directory=opendir(arg[testcounter]);
+					while ((files = readdir(directory)) != NULL) {
+						printf ("%s\n", files->d_name);
+					}
+					closedir(directory);
+					//list(arg[testcounter]);
+				}	
 			}
 		}
 		else if (strcmp(arg[0], "pid") == 0) {
@@ -368,6 +497,7 @@ main(int argc, char **argv, char **envp)
 		}
 
 
+
 		else {  // external command
 		if(strcmp(arg[arg_no-1],"&")==0){
 				arg_no=arg_no-1;
@@ -385,6 +515,7 @@ main(int argc, char **argv, char **envp)
 			char    **p;
 			struct pathelement *path, *tmp;
 
+		
 			if(arg_no >=3){
 				if(strcmp(arg[arg_no-2],">")==0){
 				if(!noclobberVal){
@@ -426,8 +557,8 @@ main(int argc, char **argv, char **envp)
 							int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
 							close(1);
 							dup(tempfileStatus);
-							close(2)
-							dup(tempfileStatus)
+							close(2);
+							dup(tempfileStatus);
 							close(tempfileStatus);
 							arg_no=arg_no-2;
 						}
@@ -435,9 +566,8 @@ main(int argc, char **argv, char **envp)
 							printf("File exists, will no overwrite\n");
 							exit(0);
 						}
-						}
 					}
-				} 
+				}
 				else if(strcmp(arg[arg_no-2],">>")==0){
 					if(!noclobberVal){
 						int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND);
@@ -576,6 +706,11 @@ main(int argc, char **argv, char **envp)
 			printf("waitpid error");
 			//pid[arraynumber] = (int)pid;
                 }
+			
+			//reopen filestreams
+		dup2(stdin_save,0);
+		dup2(stdout_save,1);
+		dup2(stderr_save,2);
 
            nextprompt:
 		//showprompt();
