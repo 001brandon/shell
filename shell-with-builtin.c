@@ -18,12 +18,22 @@ int calledFg = 0;
 
 int fgNum;
 
+int shellpid;
+
 struct node *temp, *n;
 
 void sig_handler(int sig)
 {
 	if(sig==SIGINT){
+		printf("current foregrounded process: %d\n",tcgetpgrp(0));
+		if(shellpid == tcgetpgrp(0)) {
+			printf("the shell is foregrounded, will not kill shell\n");
+		}
+		else {
+			kill(tcgetpgrp(0),2);
+		}
 		if(calledFg) {
+			printf("called fg\n");
 			temp = head;
 			for (int i = 0; i < fgNum - 1;i++) {
 				temp = temp->next;
@@ -52,9 +62,12 @@ main(int argc, char **argv, char **envp)
 	int *pid_list=malloc(sizeof(int));
 	int childPID;
 	int isBackground=0;
-	int shellPid = getpid();
+	shellpid = getpid();
 	int noclobberVal=0;
-	setpgid(shellPid,shellPid);
+	int stdin_save;
+	int stdout_save;
+	int stderr_save;
+	setpgid(shellpid,shellpid);
 	head=NULL;
 	n=head;
 	signal(SIGTSTP, SIG_IGN); 
@@ -104,6 +117,123 @@ main(int argc, char **argv, char **envp)
 		  printf("arg[%d] = %s\n", i, arg[i]);
                 */
 
+			   //save filestreams so we can reopen later
+		stdin_save = dup(0);
+		stdout_save = dup(1);
+		stderr_save = dup(2);
+
+		//check for redirects
+		if(arg_no >=3){
+			if(strcmp(arg[arg_no-2],">")==0){
+				printf("detected\n");
+				if(!noclobberVal){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
+					close(1);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					int fileStatus=open(arg[arg_no-1],O_RDWR);
+					if(fileStatus==-1){
+						int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
+						close(1);
+						dup(tempfileStatus);
+						close(tempfileStatus);
+						arg_no=arg_no-2;
+					}
+					else{
+						printf("File exists, will no overwrite\n");
+						exit(0);
+					}
+				}
+			}
+			//Makes file breaks redirect
+			else if(strcmp(arg[arg_no-2],">&")==0){
+				if(!noclobberVal){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
+					close(1);
+					dup(fileStatus);
+					close(2);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					int fileStatus=open(arg[arg_no-1],O_RDWR);
+					if(fileStatus==-1){
+						int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
+						close(1);
+						dup(tempfileStatus);
+						close(2);
+						dup(tempfileStatus);
+						close(tempfileStatus);
+						arg_no=arg_no-2;
+					}
+					else{
+						printf("File exists, will no overwrite\n");
+						exit(0);
+					}
+				}
+			}
+			else if(strcmp(arg[arg_no-2],">>")==0){
+				if(!noclobberVal){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND);
+					close(1);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND);
+					if(fileStatus==-1){
+						printf("Will not create a file\n");
+						exit(0);
+					}
+					else{
+						close(1);
+						dup(fileStatus);
+						close(fileStatus);
+						arg_no=arg_no-2;
+					}
+				}
+			} 
+			else if(strcmp(arg[arg_no-2],">>&")==0){
+				if(!noclobberVal){
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND);
+					close(1);
+					dup(fileStatus);
+					close(2);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND);
+					if(fileStatus==-1){
+						printf("Will not create a file\n");
+						exit(0);
+					}
+					else{
+						close(1);
+						dup(fileStatus);
+						close(2);
+						dup(fileStatus);
+						close(fileStatus);
+						arg_no=arg_no-2;
+					}
+				}
+			}
+			else if(strcmp(arg[arg_no-2],"<")==0){
+				int fileStatus=open(arg[arg_no-1],O_RDONLY);
+				close(0);
+				dup(fileStatus);
+				close(fileStatus);
+				arg_no=arg_no-2;
+			} 
+		}
+
+
                 if (strcmp(arg[0], "pwd") == 0) { // built-in command pwd 
 		  printf("Executing built-in [pwd]\n");
 	          ptr = getcwd(NULL, 0);
@@ -117,7 +247,18 @@ main(int argc, char **argv, char **envp)
 					if (arg[1] == NULL) { // "empty" fg defaults to first backgrounded job
 						fgNum = 1;
 						printf("sending job number 1 to foreground\n");
+						tcsetpgrp(0,head->data);
+						signal(SIGTTOU, SIG_IGN);
+						tcsetpgrp(1,head->data);
+						signal(SIGTTOU, SIG_IGN);
+						tcsetpgrp(2,head->data);
+						signal(SIGTTOU, SIG_IGN);
+						kill(- head->data,SIGCONT);
 						waitpid(head->data,&status,0);
+    					tcsetpgrp(0, getpid());
+						tcsetpgrp(1, getpid());
+						tcsetpgrp(2, getpid());
+    					signal(SIGTTOU, SIG_DFL);
 						delete(head->data);
 					}
 					else{
@@ -253,19 +394,28 @@ main(int argc, char **argv, char **envp)
 			}
 		}
 		else if (strcmp(arg[0], "list") == 0) {
+			char file[255];
 			printf("Executing built-in [list]\n");
-			if (arg[1] == NULL) {  // "empty" list defaults to .
-		    	list(".");
-		    	goto nextprompt;
+			if (arg[1] == NULL || arg[1][0] != '/') {  // "empty" list defaults to .
+			    struct dirent *files;
+				DIR *directory=opendir(".");
+				while ((files = readdir(directory)) != NULL) {
+					printf ("%s\n", files->d_name);
+				}
+				closedir(directory);
+		    	//list(".");
             }
 			else {
 				int testcounter=1;
-				while(arg[testcounter]!=NULL){
-					list(arg[testcounter]);
-					testcounter++;
-
-				}
-					
+				for(int testcounter = 1; testcounter < arg_no; testcounter++) {
+					struct dirent *files;
+					DIR *directory=opendir(arg[testcounter]);
+					while ((files = readdir(directory)) != NULL) {
+						printf ("%s\n", files->d_name);
+					}
+					closedir(directory);
+					//list(arg[testcounter]);
+				}	
 			}
 		}
 		else if (strcmp(arg[0], "pid") == 0) {
@@ -368,6 +518,7 @@ main(int argc, char **argv, char **envp)
 		}
 
 
+
 		else {  // external command
 		if(strcmp(arg[arg_no-1],"&")==0){
 				arg_no=arg_no-1;
@@ -385,6 +536,7 @@ main(int argc, char **argv, char **envp)
 			char    **p;
 			struct pathelement *path, *tmp;
 
+		
 			if(arg_no >=3){
 				if(strcmp(arg[arg_no-2],">")==0){
 				if(!noclobberVal){
@@ -435,8 +587,13 @@ main(int argc, char **argv, char **envp)
 							printf("File exists, will no overwrite\n");
 							exit(0);
 						}
+<<<<<<< HEAD
 						}
 					} 
+=======
+					}
+				}
+>>>>>>> main
 				else if(strcmp(arg[arg_no-2],">>")==0){
 					if(!noclobberVal){
 						int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND);
@@ -564,17 +721,38 @@ main(int argc, char **argv, char **envp)
 		  /* parent */
 		  printf("parent pid: %d\n",getpid());
 		  printf("fd group: %d\n",tcgetpgrp(0));
+		  childPID = pid;
+		  setpgid(pid,pid);
+		  printf("child pid: %d\n",pid);
 		  if(isBackground==1){
-			  childPID = pid;
-			  setpgid(pid,pid);
-				printf("pid: %d\n",pid);
 			  insert(pid);
 			  isBackground=0;
+			  tcsetpgrp(0,shellpid);
+			  tcsetpgrp(1,shellpid);
+			  tcsetpgrp(2,shellpid);
 		  }
-		  else if ((pid = waitpid(pid, &status, 0)) < 0)
-			printf("waitpid error");
-			//pid[arraynumber] = (int)pid;
-                }
+		  else {
+			tcsetpgrp(0, pid);
+			signal(SIGTTOU, SIG_IGN);
+			tcsetpgrp(1, pid);
+			signal(SIGTTOU, SIG_IGN);
+			tcsetpgrp(2, pid);
+			signal(SIGTTOU, SIG_IGN);
+			if ((pid = waitpid(pid, &status, 0)) < 0) {
+				printf("waitpid error");
+				//pid[arraynumber] = (int)pid;
+			}
+			tcsetpgrp(0, getpid());
+			tcsetpgrp(1, getpid());
+			tcsetpgrp(2, getpid());
+    		signal(SIGTTOU, SIG_DFL);
+		  }
+		}
+			
+			//reopen filestreams
+		dup2(stdin_save,0);
+		dup2(stdout_save,1);
+		dup2(stderr_save,2);
 
            nextprompt:
 		//showprompt();

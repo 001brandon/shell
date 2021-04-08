@@ -1,0 +1,39 @@
+parent pid: 4356
+fd group: 4356
+exec arg [ls]
+exec arg [-la]
+CMD IS: /usr/bin/ls
+total 2728
+drwxrwxrwx 1 christopher christopher    4096 Apr  7 23:55 .
+drwxrwxrwx 1 christopher christopher    4096 Apr  7 23:05 ..
+drwxrwxrwx 1 christopher christopher    4096 Apr  7 23:54 .git
+-rwxrwxrwx 1 christopher christopher      11 Apr  7 23:05 1.a
+-rwxrwxrwx 1 christopher christopher       0 Apr  7 23:05 1.b
+-rwxrwxrwx 1 christopher christopher       0 Apr  7 23:05 1.c
+-rwxrwxrwx 1 christopher christopher     562 Apr  7 23:05 Makefile
+-rwxrwxrwx 1 christopher christopher      86 Apr  7 23:05 Timer.sh
+-rwxrwxrwx 1 christopher christopher       0 Apr  7 23:05 a.hh
+-rwxrwxrwx 1 christopher christopher       0 Apr  7 23:05 b.hh
+-r-xr-xr-x 1 christopher christopher     301 Apr  7 23:53 cat.txt
+-rwxrwxrwx 1 christopher christopher      88 Apr  7 23:05 cd.c
+-rwxrwxrwx 1 christopher christopher    6648 Apr  7 23:38 cd.o
+-r-xr-xr-x 1 christopher christopher     279 Apr  7 23:53 dog.txt
+-rwxrwxrwx 1 christopher christopher    1324 Apr  7 23:05 get_path.c
+-rwxrwxrwx 1 christopher christopher     362 Apr  7 23:05 get_path.h
+-rwxrwxrwx 1 christopher christopher 2599152 Apr  7 23:05 get_path.h.gch
+-rwxrwxrwx 1 christopher christopher    7616 Apr  7 23:06 get_path.o
+-rwxrwxrwx 1 christopher christopher    2144 Apr  7 23:05 linked.c
+-rwxrwxrwx 1 christopher christopher     253 Apr  7 23:05 linked.h
+-rwxrwxrwx 1 christopher christopher   10144 Apr  7 23:05 linked.o
+-rwxrwxrwx 1 christopher christopher     259 Apr  7 23:33 list.c
+-rwxrwxrwx 1 christopher christopher    6688 Apr  7 23:38 list.o
+-rwxrwxrwx 1 christopher christopher   50048 Apr  7 23:55 mysh
+-r-xr-xr-x 1 christopher christopher     288 Apr  7 23:55 okay.txt
+-r-xr-xr-x 1 christopher christopher      81 Apr  7 23:55 oo.txt
+-rwxrwxrwx 1 christopher christopher     461 Apr  7 23:38 sh.h
+-rwxrwxrwx 1 christopher christopher   18350 Apr  7 23:54 shell-with-builtin.c
+-rwxrwxrwx 1 christopher christopher   36184 Apr  7 23:55 shell-with-builtin.o
+-rwxrwxrwx 1 christopher christopher   19312 Apr  7 23:05 test-1+2
+-rwxrwxrwx 1 christopher christopher     265 Apr  7 23:05 test-1+2.c
+-rwxrwxrwx 1 christopher christopher    2513 Apr  7 23:05 which.c
+-rwxrwxrwx 1 christopher christopher    8576 Apr  7 23:06 which.o
