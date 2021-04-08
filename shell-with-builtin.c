@@ -18,12 +18,19 @@ int calledFg = 0;
 
 int fgNum;
 
+int shellpid;
+
 struct node *temp, *n;
 
 void sig_handler(int sig)
 {
 	if(sig==SIGINT){
+		printf("current foregrounded process: %d\n",tcgetpgrp(0));
+		if(shellpid == tcgetpgrp(0)) {
+			printf("the shell is foregrounded, will not kill shell\n");
+		}
 		if(calledFg) {
+			printf("called fg\n");
 			temp = head;
 			for (int i = 0; i < fgNum - 1;i++) {
 				temp = temp->next;
@@ -52,12 +59,12 @@ main(int argc, char **argv, char **envp)
 	int *pid_list=malloc(sizeof(int));
 	int childPID;
 	int isBackground=0;
-	int shellPid = getpid();
+	shellpid = getpid();
 	int noclobberVal=0;
 	int stdin_save;
 	int stdout_save;
 	int stderr_save;
-	setpgid(shellPid,shellPid);
+	setpgid(shellpid,shellpid);
 	head=NULL;
 	n=head;
 	signal(SIGTSTP, SIG_IGN); 
