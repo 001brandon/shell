@@ -426,8 +426,8 @@ main(int argc, char **argv, char **envp)
 							int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT);
 							close(1);
 							dup(tempfileStatus);
-							close(2)
-							dup(tempfileStatus)
+							close(2);
+							dup(tempfileStatus);
 							close(tempfileStatus);
 							arg_no=arg_no-2;
 						}
@@ -436,8 +436,7 @@ main(int argc, char **argv, char **envp)
 							exit(0);
 						}
 						}
-					}
-				} 
+					} 
 				else if(strcmp(arg[arg_no-2],">>")==0){
 					if(!noclobberVal){
 						int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND);
