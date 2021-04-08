@@ -29,6 +29,9 @@ void sig_handler(int sig)
 		if(shellpid == tcgetpgrp(0)) {
 			printf("the shell is foregrounded, will not kill shell\n");
 		}
+		else {
+			kill(tcgetpgrp(0),2);
+		}
 		if(calledFg) {
 			printf("called fg\n");
 			temp = head;
@@ -244,7 +247,18 @@ main(int argc, char **argv, char **envp)
 					if (arg[1] == NULL) { // "empty" fg defaults to first backgrounded job
 						fgNum = 1;
 						printf("sending job number 1 to foreground\n");
+						tcsetpgrp(0,head->data);
+						signal(SIGTTOU, SIG_IGN);
+						tcsetpgrp(1,head->data);
+						signal(SIGTTOU, SIG_IGN);
+						tcsetpgrp(2,head->data);
+						signal(SIGTTOU, SIG_IGN);
+						kill(- head->data,SIGCONT);
 						waitpid(head->data,&status,0);
+    					tcsetpgrp(0, getpid());
+						tcsetpgrp(1, getpid());
+						tcsetpgrp(2, getpid());
+    					signal(SIGTTOU, SIG_DFL);
 						delete(head->data);
 					}
 					else{
@@ -522,7 +536,7 @@ main(int argc, char **argv, char **envp)
 			char    **p;
 			struct pathelement *path, *tmp;
 
-		/*
+		
 			if(arg_no >=3){
 				if(strcmp(arg[arg_no-2],">")==0){
 				if(!noclobberVal){
@@ -630,7 +644,7 @@ main(int argc, char **argv, char **envp)
 					close(fileStatus);
 					arg_no=arg_no-2;
 				} 
-			}*/
+			}
 
 			for(int looper=0; looper<arg_no; looper++){
 				execargs[looper]=malloc(strlen(arg[looper])+1);
@@ -702,17 +716,33 @@ main(int argc, char **argv, char **envp)
 		  /* parent */
 		  printf("parent pid: %d\n",getpid());
 		  printf("fd group: %d\n",tcgetpgrp(0));
+		  childPID = pid;
+		  setpgid(pid,pid);
+		  printf("child pid: %d\n",pid);
 		  if(isBackground==1){
-			  childPID = pid;
-			  setpgid(pid,pid);
-				printf("pid: %d\n",pid);
 			  insert(pid);
 			  isBackground=0;
+			  tcsetpgrp(0,shellpid);
+			  tcsetpgrp(1,shellpid);
+			  tcsetpgrp(2,shellpid);
 		  }
-		  else if ((pid = waitpid(pid, &status, 0)) < 0)
-			printf("waitpid error");
-			//pid[arraynumber] = (int)pid;
-                }
+		  else {
+			tcsetpgrp(0, pid);
+			signal(SIGTTOU, SIG_IGN);
+			tcsetpgrp(1, pid);
+			signal(SIGTTOU, SIG_IGN);
+			tcsetpgrp(2, pid);
+			signal(SIGTTOU, SIG_IGN);
+			if ((pid = waitpid(pid, &status, 0)) < 0) {
+				printf("waitpid error");
+				//pid[arraynumber] = (int)pid;
+			}
+			tcsetpgrp(0, getpid());
+			tcsetpgrp(1, getpid());
+			tcsetpgrp(2, getpid());
+    		signal(SIGTTOU, SIG_DFL);
+		  }
+		}
 			
 			//reopen filestreams
 		dup2(stdin_save,0);

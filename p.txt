@@ -1,0 +1,6 @@
+parent pid: 502
+fd group: 502
+exec arg [cat]
+child pid: 521
+CMD IS: /usr/bin/cat
+stop
