@@ -515,7 +515,7 @@ main(int argc, char **argv, char **envp)
 			char    **p;
 			struct pathelement *path, *tmp;
 
-		
+		/*
 			if(arg_no >=3){
 				if(strcmp(arg[arg_no-2],">")==0){
 				if(!noclobberVal){
@@ -623,7 +623,7 @@ main(int argc, char **argv, char **envp)
 					close(fileStatus);
 					arg_no=arg_no-2;
 				} 
-			}
+			}*/
 
 			for(int looper=0; looper<arg_no; looper++){
 				execargs[looper]=malloc(strlen(arg[looper])+1);
