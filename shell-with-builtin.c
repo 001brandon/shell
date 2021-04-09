@@ -20,6 +20,8 @@ int fgNum;
 
 int shellpid;
 
+int noclobberVal=0;
+
 struct node *temp, *n;
 
 void sig_handler(int sig)
@@ -51,6 +53,7 @@ int status;
 
 void reapChildNoHang(void);
 void changeForegroundProcess(pid_t);
+int checkForRedirectsAndModifyArgNo(int, char**);
   
 int main(int argc, char **argv, char **envp) {
 	char	buf[MAXLINE];
@@ -65,7 +68,6 @@ int main(int argc, char **argv, char **envp) {
 	int childPID;
 	int isBackground=0;
 	shellpid = getpid();
-	int noclobberVal=0;
 	int stdin_save;
 	int stdout_save;
 	int stderr_save;
@@ -138,122 +140,13 @@ int main(int argc, char **argv, char **envp) {
 		stderr_save = dup(2);
 
 		//check for redirects
-		if(arg_no >=3){
-			if(strcmp(arg[arg_no-2],">")==0){
-				printf("detected\n");
-				if(!noclobberVal){
-					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
-					close(1);
-					dup(fileStatus);
-					close(fileStatus);
-					arg_no=arg_no-2;
-				}
-				else{
-					int fileStatus=open(arg[arg_no-1],O_RDWR);
-					if(fileStatus==-1){
-						int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
-						close(1);
-						dup(tempfileStatus);
-						close(tempfileStatus);
-						arg_no=arg_no-2;
-					}
-					else{
-						printf("File exists, will no overwrite\n");
-						exit(0);
-					}
-				}
-			}
-			//Makes file breaks redirect
-			else if(strcmp(arg[arg_no-2],">&")==0){
-				if(!noclobberVal){
-					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
-					close(1);
-					dup(fileStatus);
-					close(2);
-					dup(fileStatus);
-					close(fileStatus);
-					arg_no=arg_no-2;
-				}
-				else{
-					int fileStatus=open(arg[arg_no-1],O_RDWR);
-					if(fileStatus==-1){
-						int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
-						close(1);
-						dup(tempfileStatus);
-						close(2);
-						dup(tempfileStatus);
-						close(tempfileStatus);
-						arg_no=arg_no-2;
-					}
-					else{
-						printf("File exists, will no overwrite\n");
-						exit(0);
-					}
-				}
-			}
-			else if(strcmp(arg[arg_no-2],">>")==0){
-				if(!noclobberVal){
-					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND, 0666);
-					close(1);
-					dup(fileStatus);
-					close(fileStatus);
-					arg_no=arg_no-2;
-				}
-				else{
-					int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND, 0666);
-					if(fileStatus==-1){
-						printf("Will not create a file\n");
-						exit(0);
-					}
-					else{
-						close(1);
-						dup(fileStatus);
-						close(fileStatus);
-						arg_no=arg_no-2;
-					}
-				}
-			} 
-			else if(strcmp(arg[arg_no-2],">>&")==0){
-				if(!noclobberVal){
-					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND, 0666);
-					close(1);
-					dup(fileStatus);
-					close(2);
-					dup(fileStatus);
-					close(fileStatus);
-					arg_no=arg_no-2;
-				}
-				else{
-					int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND, 0666);
-					if(fileStatus==-1){
-						printf("Will not create a file\n");
-						exit(0);
-					}
-					else{
-						close(1);
-						dup(fileStatus);
-						close(2);
-						dup(fileStatus);
-						close(fileStatus);
-						arg_no=arg_no-2;
-					}
-				}
-			}
-			else if(strcmp(arg[arg_no-2],"<")==0){
-				int fileStatus=open(arg[arg_no-1],O_RDONLY, 0666);
-				close(0);
-				dup(fileStatus);
-				close(fileStatus);
-				arg_no=arg_no-2;
-			} 
-		}
+		arg_no = checkForRedirectsAndModifyArgNo(arg_no, arg);
 
-
-                if (strcmp(arg[0], "pwd") == 0) { // built-in command pwd 
-		  printf("Executing built-in [pwd]\n");
-	          ptr = getcwd(NULL, 0);
-                  printf("%s\n", ptr);
-                  free(ptr);
+            if (strcmp(arg[0], "pwd") == 0) { // built-in command pwd 
+				printf("Executing built-in [pwd]\n");
+				ptr = getcwd(NULL, 0);
+				printf("%s\n", ptr);
+				free(ptr);
 	        }
 			else if (strcmp(arg[0], "fg") == 0) { 
 				printf("Executing built-in [fg]\n");
@@ -299,18 +192,17 @@ int main(int argc, char **argv, char **envp) {
 		    tmp = tmp->next;
                   }
            /***/
-		   int testcounter=1;
-			while(arg[testcounter]!=NULL){
-            cmd = which(arg[testcounter], p);
-            if (cmd) {
-		    printf("%s\n", cmd);
-                    free(cmd);
-                  }
-		  else {              // argument not found
-		    printf("%s: Command not found\n", arg[testcounter]);
-		  }
-			p=get_path();
-			testcounter++;
+			for(int testcounter = 1; testcounter < arg_no; testcounter++){
+				cmd = which(arg[testcounter], p);
+				if (cmd) {
+					printf("%s\n", cmd);
+					free(cmd);
+					}
+				else {              // argument not found
+					printf("%s: Command not found\n", arg[testcounter]);
+				}
+				p=get_path();
+				testcounter++;
 			}
 
 		  while (p) {   // free list of path values
@@ -348,7 +240,7 @@ int main(int argc, char **argv, char **envp) {
            /***/
 		   //printf("%i\n",i);
 		   int testcase=1;
-		   while (arg[testcase]!=NULL) {
+		   for(int testcase = 1; testcase < arg_no; testcase++) {
 			cmd = where(arg[testcase],p,pathNum);
 			if(cmd) {
 				while(cmd) {
@@ -458,21 +350,20 @@ int main(int argc, char **argv, char **envp) {
 
 		else if (strcmp(arg[0], "printenv") == 0) {
 			printf("Executing built-in [printenv]\n");
+			/*
 			if(arg[1] != NULL && arg[2] != NULL) {
 				printf("printenv: Too many arguments.\n");
 				goto nextprompt;	
-			}
-			else {
-				if(arg[1]==NULL){
-					int index=0;
-					while(environ[index]!=NULL){
-						printf("%s\n",environ[index]);
-						index++;
-					}
-				} 
-				else {
-					printf("Enviornment of %s is: %s\n",arg[1],getenv(arg[1]));
+			}*/
+			if(arg_no < 2){
+				int index=0;
+				while(environ[index]!=NULL){
+					printf("%s\n",environ[index]);
+					index++;
 				}
+			} 
+			else {
+				printf("Enviornment of %s is: %s\n",arg[1],getenv(arg[1]));
 			}
 		}
 		else if (strcmp(arg[0], "setenv") == 0) {  //come back to this update path linked list
@@ -551,115 +442,8 @@ int main(int argc, char **argv, char **envp) {
 
 			}
 
-		
-			if(arg_no >=3){
-				if(strcmp(arg[arg_no-2],">")==0){
-				if(!noclobberVal){
-					int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
-					close(1);
-					dup(fileStatus);
-					close(fileStatus);
-					arg_no=arg_no-2;
-				}
-				else{
-					int fileStatus=open(arg[arg_no-1],O_RDWR, 0666);
-					if(fileStatus==-1){
-						int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
-						close(1);
-						dup(tempfileStatus);
-						close(tempfileStatus);
-						arg_no=arg_no-2;
-					}
-					else{
-						printf("File exists, will no overwrite\n");
-						exit(0);
-					}
-					}
-				}
-				//Makes file breaks redirect
-				else if(strcmp(arg[arg_no-2],">&")==0){
-					if(!noclobberVal){
-						int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
-						close(1);
-						dup(fileStatus);
-						close(2);
-						dup(fileStatus);
-						close(fileStatus);
-						arg_no=arg_no-2;
-					}
-					else{
-						int fileStatus=open(arg[arg_no-1],O_RDWR, 0666);
-						if(fileStatus==-1){
-							int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
-							close(1);
-							dup(tempfileStatus);
-							close(2);
-							dup(tempfileStatus);
-							close(tempfileStatus);
-							arg_no=arg_no-2;
-						}
-						else{
-							printf("File exists, will no overwrite\n");
-							exit(0);
-						}
-						}
-					} 
-				else if(strcmp(arg[arg_no-2],">>")==0){
-					if(!noclobberVal){
-						int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND, 0666);
-						close(1);
-						dup(fileStatus);
-						close(fileStatus);
-						arg_no=arg_no-2;
-					}
-					else{
-						int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND, 0666);
-						if(fileStatus==-1){
-							printf("Will not create a file\n");
-							exit(0);
-						}
-						else{
-							close(1);
-							dup(fileStatus);
-							close(fileStatus);
-							arg_no=arg_no-2;
-						}
-					}
-				} 
-				else if(strcmp(arg[arg_no-2],">>&")==0){
-					if(!noclobberVal){
-						int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND, 0666);
-						close(1);
-						dup(fileStatus);
-						close(2);
-						dup(fileStatus);
-						close(fileStatus);
-						arg_no=arg_no-2;
-					}
-					else{
-						int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND, 0666);
-						if(fileStatus==-1){
-							printf("Will not create a file\n");
-							exit(0);
-						}
-						else{
-							close(1);
-							dup(fileStatus);
-							close(2);
-							dup(fileStatus);
-							close(fileStatus);
-							arg_no=arg_no-2;
-						}
-					}
-				}
-				else if(strcmp(arg[arg_no-2],"<")==0){
-					int fileStatus=open(arg[arg_no-1],O_RDONLY, 0666);
-					close(0);
-					dup(fileStatus);
-					close(fileStatus);
-					arg_no=arg_no-2;
-				} 
-			}
+			//check for child process redirects
+			arg_no = checkForRedirectsAndModifyArgNo(arg_no,arg);
 
 			for(int looper=0; looper<arg_no; looper++){
 				execargs[looper]=malloc(strlen(arg[looper])+1);
@@ -807,5 +591,118 @@ void changeForegroundProcess(pid_t pgid) {
 	tcsetpgrp(1, getpid());
 	tcsetpgrp(2, getpid());
 	signal(SIGTTOU, SIG_DFL);
+}
+
+int checkForRedirectsAndModifyArgNo(int arg_no, char** arg) {
+	if(arg_no >=3){
+		if(strcmp(arg[arg_no-2],">")==0){
+			printf("detected\n");
+			if(!noclobberVal){
+				int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
+				close(1);
+				dup(fileStatus);
+				close(fileStatus);
+				arg_no=arg_no-2;
+			}
+			else{
+				int fileStatus=open(arg[arg_no-1],O_RDWR);
+				if(fileStatus==-1){
+					int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
+					close(1);
+					dup(tempfileStatus);
+					close(tempfileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					printf("File exists, will no overwrite\n");
+					exit(0);
+				}
+			}
+		}
+		//Makes file breaks redirect
+		else if(strcmp(arg[arg_no-2],">&")==0){
+			if(!noclobberVal){
+				int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
+				close(1);
+				dup(fileStatus);
+				close(2);
+				dup(fileStatus);
+				close(fileStatus);
+				arg_no=arg_no-2;
+			}
+			else{
+				int fileStatus=open(arg[arg_no-1],O_RDWR);
+				if(fileStatus==-1){
+					int tempfileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
+					close(1);
+					dup(tempfileStatus);
+					close(2);
+					dup(tempfileStatus);
+					close(tempfileStatus);
+					arg_no=arg_no-2;
+				}
+				else{
+					printf("File exists, will no overwrite\n");
+					exit(0);
+				}
+			}
+		}
+		else if(strcmp(arg[arg_no-2],">>")==0){
+			if(!noclobberVal){
+				int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND, 0666);
+				close(1);
+				dup(fileStatus);
+				close(fileStatus);
+				arg_no=arg_no-2;
+			}
+			else{
+				int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND, 0666);
+				if(fileStatus==-1){
+					printf("Will not create a file\n");
+					exit(0);
+				}
+				else{
+					close(1);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+			}
+		} 
+		else if(strcmp(arg[arg_no-2],">>&")==0){
+			if(!noclobberVal){
+				int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT|O_APPEND, 0666);
+				close(1);
+				dup(fileStatus);
+				close(2);
+				dup(fileStatus);
+				close(fileStatus);
+				arg_no=arg_no-2;
+			}
+			else{
+				int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND, 0666);
+				if(fileStatus==-1){
+					printf("Will not create a file\n");
+					exit(0);
+				}
+				else{
+					close(1);
+					dup(fileStatus);
+					close(2);
+					dup(fileStatus);
+					close(fileStatus);
+					arg_no=arg_no-2;
+				}
+			}
+		}
+		else if(strcmp(arg[arg_no-2],"<")==0){
+			int fileStatus=open(arg[arg_no-1],O_RDONLY, 0666);
+			close(0);
+			dup(fileStatus);
+			close(fileStatus);
+			arg_no=arg_no-2;
+		} 
+	}
+	return arg_no;
 }
 

@@ -1,4 +1,29 @@
+parent pid: 294
+fd group: 294
 exec arg [cat]
+exec arg [v.txt]
+child pid: 319
 CMD IS: /usr/bin/cat
-no
-noi
+parent pid: 267
+fd group: 267
+child pid: 275
+exec arg [cat]
+exec arg [sh.h]
+CMD IS: /usr/bin/cat
+#include "get_path.h"
+#include "linked.h"
+#include <dirent.h>
+
+int pid;
+char *which(char *command, struct pathelement *pathlist);
+char *where(char *command, struct pathelement *pathlist, int pathNum);
+//char *whereNew(char *command, struct pathelement *p, int pathNum)
+//void list(char *dir);
+void printenv(char **envp);
+void showprompt();
+void cd(const char* path);
+void list(const char *path);
+
+#define PROMPTMAX 64
+#define MAXARGS   16
+#define MAXLINE   128
