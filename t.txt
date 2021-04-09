@@ -1,0 +1,4 @@
+exec arg [cat]
+CMD IS: /usr/bin/cat
+no
+noi

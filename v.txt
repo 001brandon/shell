@@ -1,0 +1,3 @@
+exec arg [cat]
+CMD IS: /usr/bin/cat
+meow

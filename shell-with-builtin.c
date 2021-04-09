@@ -48,10 +48,11 @@ void sig_handler(int sig)
 }
 
 int status;
+
+void reapChildNoHang(void);
+void changeForegroundProcess(pid_t);
   
-int
-main(int argc, char **argv, char **envp)
-{
+int main(int argc, char **argv, char **envp) {
 	char	buf[MAXLINE];
 	char    *arg[MAXARGS];  // an array of tokens
 	char *arg2[MAXARGS];
@@ -85,17 +86,7 @@ main(int argc, char **argv, char **envp)
 		calledFg = 0;
 		pipeFound=0;
 		//reaps child at start of every command
-		temp=head;
-		while(temp!=NULL){
-			if ((waitpid(temp->data, &status, WNOHANG)) > 0){
-				printf("reaped child with pid: %d\n",temp->data);
-				delete(temp->data);
-				temp = head;
-			}
-			else{
-				temp=temp->next;
-			}
-		}
+		reapChildNoHang();
 		if (strlen(buf) == 1 && buf[strlen(buf) - 1] == '\n')
 		  goto nextprompt;  // "empty" command line
 
@@ -271,18 +262,7 @@ main(int argc, char **argv, char **envp)
 					if (arg[1] == NULL) { // "empty" fg defaults to first backgrounded job
 						fgNum = 1;
 						printf("sending job number 1 to foreground\n");
-						tcsetpgrp(0,head->data);
-						signal(SIGTTOU, SIG_IGN);
-						tcsetpgrp(1,head->data);
-						signal(SIGTTOU, SIG_IGN);
-						tcsetpgrp(2,head->data);
-						signal(SIGTTOU, SIG_IGN);
-						kill(- head->data,SIGCONT);
-						waitpid(head->data,&status,0);
-    					tcsetpgrp(0, getpid());
-						tcsetpgrp(1, getpid());
-						tcsetpgrp(2, getpid());
-    					signal(SIGTTOU, SIG_DFL);
+						changeForegroundProcess((pid_t)head->data);
 						delete(head->data);
 					}
 					else{
@@ -762,20 +742,7 @@ main(int argc, char **argv, char **envp)
 			  tcsetpgrp(2,shellpid);
 		  }
 		  else {
-			tcsetpgrp(0, pid);
-			signal(SIGTTOU, SIG_IGN);
-			tcsetpgrp(1, pid);
-			signal(SIGTTOU, SIG_IGN);
-			tcsetpgrp(2, pid);
-			signal(SIGTTOU, SIG_IGN);
-			if ((pid = waitpid(pid, &status, 0)) < 0) {
-				printf("waitpid error");
-				//pid[arraynumber] = (int)pid;
-			}
-			tcsetpgrp(0, getpid());
-			tcsetpgrp(1, getpid());
-			tcsetpgrp(2, getpid());
-    		signal(SIGTTOU, SIG_DFL);
+			changeForegroundProcess(pid);
 		  }
 		}
 			
@@ -786,17 +753,7 @@ main(int argc, char **argv, char **envp)
 
            nextprompt:
 		//showprompt();
-			temp=head;
-			while(temp!=NULL){
-				if ((waitpid(temp->data, &status, WNOHANG)) > 0){
-					printf("reaped child with pid: %d\n",temp->data);
-					delete(temp->data);
-					temp = head;
-				}
-				else{
-					temp=temp->next;
-				}
-			}
+			reapChildNoHang();
 			display(n);
 			char *cwd=getcwd(NULL,0);
 			fprintf(stdout, "%s [%s] $: ",prefix,cwd);	/* print prompt (printf requires %% to print %) */
@@ -813,6 +770,16 @@ main(int argc, char **argv, char **envp)
 }
 
 void showprompt(){
+	reapChildNoHang();
+	display(n);
+    char *cwd=getcwd(NULL,0);
+	fprintf(stdout, "%s [%s] $: ",prefix,cwd);	/* print prompt (printf requires %% to print %) */
+	free(cwd);
+    fflush(stdout);
+    return;
+}
+
+void reapChildNoHang(void) {
 	temp=head;
 	while(temp!=NULL){
 		if ((waitpid(temp->data, &status, WNOHANG)) > 0){
@@ -824,14 +791,21 @@ void showprompt(){
 			temp=temp->next;
 		}
 	}
-	display(n);
-    char *cwd=getcwd(NULL,0);
-	fprintf(stdout, "%s [%s] $: ",prefix,cwd);	/* print prompt (printf requires %% to print %) */
-	free(cwd);
-    fflush(stdout);
-    return;
 }
 
-
-//work on zombie
+void changeForegroundProcess(pid_t pgid) {
+	int status;
+	tcsetpgrp(0,pgid);
+	signal(SIGTTOU, SIG_IGN);
+	tcsetpgrp(1,pgid);
+	signal(SIGTTOU, SIG_IGN);
+	tcsetpgrp(2,pgid);
+	signal(SIGTTOU, SIG_IGN);
+	kill(- pgid,SIGCONT);
+	waitpid(pgid,&status,0);
+	tcsetpgrp(0, getpid());
+	tcsetpgrp(1, getpid());
+	tcsetpgrp(2, getpid());
+	signal(SIGTTOU, SIG_DFL);
+}
 
