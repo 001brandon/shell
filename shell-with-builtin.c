@@ -58,7 +58,8 @@ int checkForRedirectsAndModifyArgNo(int, char**);
 int main(int argc, char **argv, char **envp) {
 	char	buf[MAXLINE];
 	char    *arg[MAXARGS];  // an array of tokens
-	char *arg2[MAXARGS];
+	char *argLeft[MAXARGS]; //an array of tokens on left side of pipe
+	char *argRight[MAXARGS]; //an array of tokens on right side of pipe
 	char    *ptr;
 	char *usrInput;
         char    *pch;
@@ -82,11 +83,21 @@ int main(int argc, char **argv, char **envp) {
 	free(initPWD);
 	int fd[2];
 	int pipeFound=0;
+	pid_t pipePid;
+	int isLeftSide;
 	RESTART:
 	showprompt();
 	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {
+		isLeftSide = 0;
 		calledFg = 0;
 		pipeFound=0;
+		 //save filestreams so we can reopen later
+		stdin_save = dup(0);
+		stdout_save = dup(1);
+		stderr_save = dup(2);
+		dup2(stdin_save,0);
+		dup2(stdout_save,1);
+		dup2(stderr_save,2);
 		//reaps child at start of every command
 		reapChildNoHang();
 		if (strlen(buf) == 1 && buf[strlen(buf) - 1] == '\n')
@@ -98,46 +109,92 @@ int main(int argc, char **argv, char **envp) {
 		arg_no = 0;
                 pch = strtok(buf, " ");
 				int arg_no2=0;
-                while (pch != NULL && arg_no < MAXARGS)
-                {
-				if(strcmp(pch,"|")==0|strcmp(pch,"|&")==0){
-					pipeFound=1;
+                while (pch != NULL && arg_no < MAXARGS) {
+					if(strcmp(pch,"|")==0|strcmp(pch,"|&")==0){
+						pipeFound=1;
+						pch = strtok (NULL, " ");
+						pipe(fd);
+						} else {
+							/*close(fd[0]);
+							close(1);
+							dup(fd[1]);*/
+
+
+					}
+					if(!pipeFound){
+					argLeft[arg_no] = pch;
+					arg_no++;
+					}
+					else{
+						argRight[arg_no2]=pch;
+						arg_no2++;
+					}
 					pch = strtok (NULL, " ");
-					pipe(fd);
-					} else {
-						/*close(fd[0]);
-						close(1);
-						dup(fd[1]);*/
-
-
-				}
-				if(!pipeFound){
-		  		arg[arg_no] = pch;
-		  		arg_no++;
-				}
-				else{
-					arg2[arg_no2]=pch;
-					arg_no2++;
-					
-				}
-				pch = strtok (NULL, " ");
-
                 }
-		arg[arg_no] = (char *) NULL;
-		arg2[arg_no2]= (char *) NULL;
+		argLeft[arg_no] = (char *) NULL;
+		argRight[arg_no2]= (char *) NULL;
 
-		if (arg[0] == NULL)  // "blank" command line
-		  goto nextprompt;
+		if(pipeFound) {
+			//child will be left side, parent will be right side
+			//child will redirect stdoutput to stdinput of parent
+			//parent waits for child to finish (blocking) and then starts
+			pipePid = fork();
+			if(pipePid < 0) {
+				printf("error forking pipe\n");
+				exit(5);
+			}
+			if(pipePid == 0) {
+				isLeftSide = 1;
+				memcpy(arg,argLeft,sizeof(argLeft));
+				//close(1);
+				//dup(fd[1]);
+				close(fd[0]);
+				dup2(fd[1],STDOUT_FILENO);
+				close(fd[1]);
+			}
+			else{
+				isLeftSide = 0;
+				memcpy(arg,argRight,sizeof(argRight));
+				setpgid(pipePid,pipePid);
+				tcsetpgrp(0,pipePid);
+				signal(SIGTTOU, SIG_IGN);
+				tcsetpgrp(1,pipePid);
+				signal(SIGTTOU, SIG_IGN);
+				tcsetpgrp(2,pipePid);
+				signal(SIGTTOU, SIG_IGN);
+				kill(- pipePid,SIGCONT);
+				waitpid(pipePid,&status,0);
+				tcsetpgrp(0, getpid());
+				tcsetpgrp(1, getpid());
+				tcsetpgrp(2, getpid());
+				signal(SIGTTOU, SIG_DFL);
+				close(fd[1]);
+				dup2(fd[0],STDIN_FILENO);
+				close(fd[0]);
+				waitpid(pipePid,&status,0);
+				printf("child has finished with status %d and exited status %d, will now execute right side of pipe\n",WEXITSTATUS(status), WIFEXITED(status));
+				//close(0);
+				//dup(fd[0]);
+			}
+		}
+		else{
+			memcpy(arg,argLeft,sizeof(argLeft));
+		}
+		printf("isLeftSide: %d\n",isLeftSide);
+
+		if (arg[0] == NULL) { // "blank" command line
+			if(isLeftSide ==1) {
+				printf("left side blank\n");
+				exit(50);
+			}
+		  	goto nextprompt;
+		}
 
 		/* print tokens
 		for (i = 0; i < arg_no; i++)
 		  printf("arg[%d] = %s\n", i, arg[i]);
                 */
 
-			   //save filestreams so we can reopen later
-		stdin_save = dup(0);
-		stdout_save = dup(1);
-		stderr_save = dup(2);
 
 		//check for redirects
 		arg_no = checkForRedirectsAndModifyArgNo(arg_no, arg);
@@ -410,9 +467,6 @@ int main(int argc, char **argv, char **envp) {
 			noclobberVal=!noclobberVal;
 			printf("%d\n",noclobberVal);
 		}
-
-
-
 		else {  // external command
 		if(strcmp(arg[arg_no-1],"&")==0){
 				arg_no=arg_no-1;
@@ -432,14 +486,6 @@ int main(int argc, char **argv, char **envp) {
                         int     csource, j;
 			char    **p;
 			struct pathelement *path, *tmp;
-
-			if(pipeFound){
-				close(fd[1]);
-				close(0);
-				dup(fd[0]);
-
-
-			}
 
 			//check for child process redirects
 			arg_no = checkForRedirectsAndModifyArgNo(arg_no,arg);
@@ -529,12 +575,23 @@ int main(int argc, char **argv, char **envp) {
 		  }
 		}
 			
-			//reopen filestreams
-		dup2(stdin_save,0);
-		dup2(stdout_save,1);
-		dup2(stderr_save,2);
-
+			
            nextprompt:
+		   if(isLeftSide) {
+			   dup2(stdin_save,0);
+				dup2(stdout_save,1);
+				dup2(stderr_save,2);
+				printf("hey im done\n");
+			   close(fd[1]);
+			   close(1);
+			   close(0);
+			   close(fd[0]);
+			   exit(50);
+		   }
+		   //reopen filestreams
+		   dup2(stdin_save,0);
+		   dup2(stdout_save,1);
+		   dup2(stderr_save,2);
 		//showprompt();
 			reapChildNoHang();
 			display(n);

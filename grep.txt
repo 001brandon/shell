@@ -1,0 +1,11 @@
+parent pid: 594
+fd group: 594
+child pid: 599
+exec arg [cat]
+CMD IS: /usr/bin/cat
+hello
+good
+bye
+meow
+hellow
+hello
