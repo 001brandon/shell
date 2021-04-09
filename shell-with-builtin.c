@@ -350,12 +350,11 @@ int main(int argc, char **argv, char **envp) {
 
 		else if (strcmp(arg[0], "printenv") == 0) {
 			printf("Executing built-in [printenv]\n");
-			/*
-			if(arg[1] != NULL && arg[2] != NULL) {
+			if(arg_no > 2) {
 				printf("printenv: Too many arguments.\n");
 				goto nextprompt;	
-			}*/
-			if(arg_no < 2){
+			}
+			else if(arg_no < 2){
 				int index=0;
 				while(environ[index]!=NULL){
 					printf("%s\n",environ[index]);
@@ -369,17 +368,17 @@ int main(int argc, char **argv, char **envp) {
 		else if (strcmp(arg[0], "setenv") == 0) {  //come back to this update path linked list
 			printf("Executing built-in [setenv]\n");
 			const char* empty=" ";
-			if(arg[1] != NULL && arg[2] != NULL && arg[3] != NULL) {
+			if(arg_no > 3) {
 				printf("setenv: Too many arguments.\n");
 			}
-			else if(arg[1]==NULL){
+			else if(arg_no == 1){
 				int index=0;
 				while(environ[index]!=NULL){
 					printf("%s\n",environ[index]);
 					index++;
 				} 
 			}
-			else if(arg[2]==NULL){
+			else if(arg_no == 2){
 				setenv(arg[1],empty,1);  //I changed this to overwrite = 1 because that's how it works in tcsh
 			} else{
 				setenv(arg[1],arg[2],1);
