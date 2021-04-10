@@ -85,6 +85,7 @@ int main(int argc, char **argv, char **envp) {
 	int pipeFound=0;
 	pid_t pipePid;
 	int isLeftSide;
+	init_thread();
 	RESTART:
 	showprompt();
 	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {

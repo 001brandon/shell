@@ -1,8 +1,8 @@
 CC=gcc
 # CC=gcc -Wall
 
-mysh: get_path.o which.o shell-with-builtin.o cd.o list.o linked.o
-	$(CC) -g shell-with-builtin.c get_path.o which.o cd.o list.o linked.o -o mysh
+mysh: get_path.o which.o shell-with-builtin.o cd.o list.o linked.o watchuser.o
+	$(CC) -g -pthread shell-with-builtin.c get_path.o which.o cd.o list.o linked.o watchuser.o -o mysh
 
 shell-with-builtin.o: shell-with-builtin.c  sh.h 
 	$(CC) -g -c shell-with-builtin.c
@@ -21,5 +21,9 @@ list.o: list.c sh.h
 
 linked.o: linked.c linked.h
 	$(CC) -g -c linked.c
+
+watchuser.o: watchuser.c watchuser.h
+	$(CC) -g -c watchuser.c
+
 clean:
 	rm -rf shell-with-builtin.o get_path.o which.o cd.o list.o mysh
