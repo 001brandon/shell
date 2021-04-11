@@ -22,6 +22,8 @@ int shellpid;
 
 int noclobberVal=0;
 
+int threadCreate=0;
+
 struct node *temp, *n;
 
 void sig_handler(int sig)
@@ -85,7 +87,6 @@ int main(int argc, char **argv, char **envp) {
 	int pipeFound=0;
 	pid_t pipePid;
 	int isLeftSide;
-	init_thread();
 	RESTART:
 	showprompt();
 	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {
@@ -469,8 +470,22 @@ int main(int argc, char **argv, char **envp) {
 			printf("%d\n",noclobberVal);
 		}
 		else if(strcmp(arg[0], "watchuser")==0){
-			if(arg[1]!=NULL){
+			if(threadCreate==0 && arg[1]!=NULL && strcmp(arg[2],"off")==0){
+				init_thread();
+				threadCreate=1;
+			}
+			if(arg[1]!=NULL && arg[2]== NULL){
 				printf("Executing built-in [watchuser] for user %s\n",arg[1]);
+				pthread_mutex_lock(&lock);
+				insertC(arg[1]);
+				pthread_mutex_unlock(&lock);
+			} else if(arg[1]!=NULL && strcmp(arg[2],"off")==0){
+				printf("Executing built- in [watchuser] removing user %s\n",arg[2]);
+				pthread_mutex_lock(&lock);
+				deleteC(arg[1]);
+				pthread_mutex_unlock(&lock);
+			} else {
+				printf("Invalid watchuser arguments\n");
 			}
 
 		}

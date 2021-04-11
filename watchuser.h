@@ -7,5 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "linked_char.h"
+pthread_mutex_t lock;
 void init_thread();
 void *watch_thread();
+void checkuser(char *username);
+void checklist();

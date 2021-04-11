@@ -1,3 +1,6 @@
+ #ifndef header
+ #define header
+ 
  #include <string.h>
  #include <stdio.h>
  int countC();
@@ -13,3 +16,5 @@ void insertC(char* num);
 int deleteC(char* num);
 void  displayC(struct nodeC *r);
 void freeallC();
+
+#endif
