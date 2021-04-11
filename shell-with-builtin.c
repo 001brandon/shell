@@ -236,7 +236,7 @@ int main(int argc, char **argv, char **envp) {
 						for(int i = 0; i < fgNum - 1;i++){
 							temp = temp->next;
 						}
-						waitpid(temp->data,&status,0);
+						changeForegroundProcess((pid_t)temp->data);
 						delete(temp->data);
 					}
 				}
