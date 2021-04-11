@@ -148,7 +148,7 @@ int main(int argc, char **argv, char **envp) {
 			}
 			if(pipePid == 0) {
 				isLeftSide = 1;
-				memcpy(arg,argLeft,sizeof(argLeft));
+				memcpy(arg,argLeft,sizeof(argLeft));  //assign the arg array to the array of the left side
 				//close(1);
 				//dup(fd[1]);
 				close(fd[0]);
@@ -157,7 +157,8 @@ int main(int argc, char **argv, char **envp) {
 			}
 			else{
 				isLeftSide = 0;
-				memcpy(arg,argRight,sizeof(argRight));
+				arg_no = arg_no2;		//assign the arg count variable to the arg count of the right side
+				memcpy(arg,argRight,sizeof(argRight));  //assign the arg array to the array of the right side
 				setpgid(pipePid,pipePid);
 				tcsetpgrp(0,pipePid);
 				signal(SIGTTOU, SIG_IGN);
