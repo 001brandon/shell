@@ -38,7 +38,7 @@ void sig_handler(int sig)
 			kill(tcgetpgrp(0),2);
 		}
 		if(calledFg) {
-			printf("called fg\n");
+			//printf("called fg\n");
 			temp = head;
 			for (int i = 0; i < fgNum - 1;i++) {
 				temp = temp->next;
@@ -86,6 +86,7 @@ int main(int argc, char **argv, char **envp) {
 	free(initPWD);
 	int fd[2];
 	int pipeFound=0;
+	int pipeStdErr=0;
 	pid_t pipePid;
 	int isLeftSide;
 
@@ -115,6 +116,13 @@ int main(int argc, char **argv, char **envp) {
 				int arg_no2=0;
                 while (pch != NULL && arg_no < MAXARGS) {
 					if(strcmp(pch,"|")==0|strcmp(pch,"|&")==0){
+						if(strcmp(pch,"|&")==0) {
+							//printf("this is the stderr one\n");
+							pipeStdErr = 1;
+						}
+						else{
+							pipeStdErr = 0;
+						}
 						pipeFound=1;
 						pch = strtok (NULL, " ");
 						pipe(fd);
@@ -150,10 +158,11 @@ int main(int argc, char **argv, char **envp) {
 			if(pipePid == 0) {
 				isLeftSide = 1;
 				memcpy(arg,argLeft,sizeof(argLeft));  //assign the arg array to the array of the left side
-				//close(1);
-				//dup(fd[1]);
 				close(fd[0]);
 				dup2(fd[1],STDOUT_FILENO);
+				if(pipeStdErr) {
+					dup2(fd[1],STDERR_FILENO);
+				}
 				close(fd[1]);
 			}
 			else{
@@ -177,7 +186,7 @@ int main(int argc, char **argv, char **envp) {
 				dup2(fd[0],STDIN_FILENO);
 				close(fd[0]);
 				waitpid(pipePid,&status,0);
-				printf("child has finished with status %d and exited status %d, will now execute right side of pipe\n",WEXITSTATUS(status), WIFEXITED(status));
+				//printf("child has finished with status %d and exited status %d, will now execute right side of pipe\n",WEXITSTATUS(status), WIFEXITED(status));
 				//close(0);
 				//dup(fd[0]);
 			}
@@ -185,11 +194,11 @@ int main(int argc, char **argv, char **envp) {
 		else{
 			memcpy(arg,argLeft,sizeof(argLeft));
 		}
-		printf("isLeftSide: %d\n",isLeftSide);
+		//printf("isLeftSide: %d\n",isLeftSide);
 
 		if (arg[0] == NULL) { // "blank" command line
 			if(isLeftSide ==1) {
-				printf("left side blank\n");
+				//printf("left side blank\n");
 				exit(50);
 			}
 		  	goto nextprompt;
@@ -555,7 +564,7 @@ int main(int argc, char **argv, char **envp) {
 			i = 0;
 			//char *const envp[2]={"PATH=/bin",NULL};
             for (i = 0; i < arg_no; i++)
-			  printf("exec arg [%s]\n", execargs[i]);
+			  //printf("exec arg [%s]\n", execargs[i]);
 			if(arg[0][0]=='/'){
 				execve(execargs[0], execargs, NULL);  //changed execargs to just args
 			} else {
@@ -566,7 +575,7 @@ int main(int argc, char **argv, char **envp) {
 
 				cmd = which(execargs[0], p);
 				if(cmd){
-					printf("CMD IS: %s\n",cmd);
+					//printf("CMD IS: %s\n",cmd);
 				}
 				else{              // argument not found
 					printf("%s: Command not found\n", execargs[0]);
@@ -589,11 +598,11 @@ int main(int argc, char **argv, char **envp) {
 		  }
 
 		  /* parent */
-		  printf("parent pid: %d\n",getpid());
-		  printf("fd group: %d\n",tcgetpgrp(0));
+		 // printf("parent pid: %d\n",getpid());
+		  //printf("fd group: %d\n",tcgetpgrp(0));
 		  childPID = pid;
 		  setpgid(pid,pid);
-		  printf("child pid: %d\n",pid);
+		 // printf("child pid: %d\n",pid);
 		  if(isBackground==1){
 			  insert(pid);
 			  isBackground=0;
@@ -612,11 +621,12 @@ int main(int argc, char **argv, char **envp) {
 			   dup2(stdin_save,0);
 				dup2(stdout_save,1);
 				dup2(stderr_save,2);
-				printf("hey im done\n");
+				//printf("hey im done\n");
 			   close(fd[1]);
 			   close(1);
 			   close(0);
 			   close(fd[0]);
+			   close(2);
 			   exit(50);
 		   }
 		   //reopen filestreams
@@ -683,7 +693,7 @@ void changeForegroundProcess(pid_t pgid) {
 int checkForRedirectsAndModifyArgNo(int arg_no, char** arg) {
 	if(arg_no >=3){
 		if(strcmp(arg[arg_no-2],">")==0){
-			printf("detected\n");
+			//printf("detected\n");
 			if(!noclobberVal){
 				int fileStatus=open(arg[arg_no-1],O_RDWR|O_CREAT, 0666);
 				close(1);
