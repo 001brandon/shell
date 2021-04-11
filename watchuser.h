@@ -12,4 +12,4 @@ pthread_mutex_t lock;
 void init_thread();
 void *watch_thread();
 void checkuser(char *username);
-void checklist();
+void checkList();

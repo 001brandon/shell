@@ -59,32 +59,27 @@ void addafterC(char *num, int loc)
 }
  
  
- 
-void insertC(char* num)
+ void insertC(char *name)
 {
-    int c=0;
-    struct nodeC *temp;
-    temp=headC;
-    if(temp==NULL)
-    {
-    addC(num);
-    }
-    else
-    {
-    while(temp!=NULL)
-    {
-        if(temp->data<num)
-        c++;
-        temp=temp->next;
-    }
-    if(c==0)
-        addC(num);
-    else if(c<countC())
-        addafterC(num,++c);
-    else
-        appendC(num);
-    }
+  struct nodeC *temp, *mp3;
+  mp3 = (struct nodeC *) malloc(sizeof(struct nodeC));        // malloc space for MP3
+  mp3->data = (char *) malloc(strlen(name) + 1);  // malloc space for name
+  strcpy(mp3->data, name);                        // "assign" name via copy
+  mp3->next = NULL;
+
+  if (headC == NULL)
+  {
+    headC = mp3;               // add the first MP3
+  }
+  else
+  {
+    temp = headC;
+    while (temp->next != NULL)
+      temp = temp->next;
+    temp->next = mp3;         // append to the tail/end
+  }
 }
+ 
  
  
  
