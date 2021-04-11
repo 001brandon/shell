@@ -24,6 +24,7 @@ int noclobberVal=0;
 
 int threadCreate=0;
 
+
 struct node *temp, *n;
 
 void sig_handler(int sig)
@@ -273,7 +274,10 @@ int main(int argc, char **argv, char **envp) {
 	        } else if(strcmp(arg[0], "exit") == 0) {
 				printf("Executing built-in [exit]\n");
 				freeall();
+				freeallC();
 				free(pid_list);
+				pthread_cancel(watch_user);
+				pthread_join(watch_user,NULL);
 				exit(0);
 			}
 		else if (strcmp(arg[0], "where") == 0) { // built-in command where

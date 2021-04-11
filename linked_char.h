@@ -3,6 +3,7 @@
  
  #include <string.h>
  #include <stdio.h>
+ pthread_t watch_user;
  int countC();
  struct nodeC
 {

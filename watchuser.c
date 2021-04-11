@@ -9,8 +9,7 @@
 #include <string.h>
 #include "watchuser.h"
 void init_thread(){
-    pthread_t watch_pid;
-    pthread_create(&watch_pid, NULL, watch_thread, "watch thread created");
+    pthread_create(&watch_user, NULL, watch_thread, "watch thread created");
 }
 
 void *watch_thread(){
