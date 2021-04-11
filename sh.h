@@ -2,6 +2,7 @@
 #include "linked.h"
 #include <dirent.h>
 #include "watchuser.h"
+#include "linked_char.h"
 
 int pid;
 char *which(char *command, struct pathelement *pathlist);

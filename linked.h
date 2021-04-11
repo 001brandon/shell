@@ -1,3 +1,4 @@
+ #include<strings.h>
  int count();
  struct node
 {

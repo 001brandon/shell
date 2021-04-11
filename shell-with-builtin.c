@@ -468,6 +468,12 @@ int main(int argc, char **argv, char **envp) {
 			noclobberVal=!noclobberVal;
 			printf("%d\n",noclobberVal);
 		}
+		else if(strcmp(arg[0], "watchuser")==0){
+			if(arg[1]!=NULL){
+				printf("Executing built-in [watchuser] for user %s\n",arg[1]);
+			}
+
+		}
 		else {  // external command
 		if(strcmp(arg[arg_no-1],"&")==0){
 				arg_no=arg_no-1;
