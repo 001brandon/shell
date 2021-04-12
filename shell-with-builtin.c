@@ -18,6 +18,8 @@ int calledFg = 0;
 
 int fgNum;
 
+int printedNoClobber;
+
 int shellpid;
 
 int noclobberVal=0;
@@ -89,10 +91,12 @@ int main(int argc, char **argv, char **envp) {
 	int pipeStdErr=0;
 	pid_t pipePid;
 	int isLeftSide;
+	
 
 	RESTART:
 	showprompt();
 	while ((usrInput=fgets(buf, MAXLINE, stdin)) != NULL) {
+		printedNoClobber = 0;
 		isLeftSide = 0;
 		calledFg = 0;
 		pipeFound=0;
@@ -565,7 +569,7 @@ int main(int argc, char **argv, char **envp) {
 			//char *const envp[2]={"PATH=/bin",NULL};
             for (i = 0; i < arg_no; i++)
 			  //printf("exec arg [%s]\n", execargs[i]);
-			if(arg[0][0]=='/'){
+			if(arg[0][0]=='/' || arg[0][0]=='.'){
 				execve(execargs[0], execargs, NULL);  //changed execargs to just args
 			} else {
 				char *cmd;
@@ -711,8 +715,10 @@ int checkForRedirectsAndModifyArgNo(int arg_no, char** arg) {
 					arg_no=arg_no-2;
 				}
 				else{
-					printf("File exists, will no overwrite\n");
-					exit(0);
+					if(printedNoClobber == 0){
+						printf("File does not exist will not create\n");
+						printedNoClobber = 1;
+					}
 				}
 			}
 		}
@@ -739,8 +745,10 @@ int checkForRedirectsAndModifyArgNo(int arg_no, char** arg) {
 					arg_no=arg_no-2;
 				}
 				else{
-					printf("File exists, will no overwrite\n");
-					exit(0);
+					if(printedNoClobber == 0){
+						printf("File does not exist will not create\n");
+						printedNoClobber = 1;
+					}
 				}
 			}
 		}
@@ -755,8 +763,10 @@ int checkForRedirectsAndModifyArgNo(int arg_no, char** arg) {
 			else{
 				int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND, 0666);
 				if(fileStatus==-1){
-					printf("Will not create a file\n");
-					exit(0);
+					if(printedNoClobber == 0){
+						printf("File does not exist will not create\n");
+						printedNoClobber = 1;
+					}
 				}
 				else{
 					close(1);
@@ -779,8 +789,10 @@ int checkForRedirectsAndModifyArgNo(int arg_no, char** arg) {
 			else{
 				int fileStatus=open(arg[arg_no-1],O_RDWR|O_APPEND, 0666);
 				if(fileStatus==-1){
-					printf("Will not create a file\n");
-					exit(0);
+					if(printedNoClobber == 0){
+						printf("File does not exist will not create\n");
+						printedNoClobber = 1;
+					}
 				}
 				else{
 					close(1);

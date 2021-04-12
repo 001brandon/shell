@@ -13,3 +13,4 @@ void init_thread();
 void *watch_thread();
 void checkuser(char *username);
 void checkList();
+void checkLogOff(char *username);

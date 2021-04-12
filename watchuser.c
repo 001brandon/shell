@@ -14,9 +14,8 @@ void init_thread(){
 
 void *watch_thread(){
     while(1){
-    printf("EXECUTING\n");
-    sleep(10);
     checkList();
+    sleep(20);
     }
 }
 
@@ -27,7 +26,33 @@ void checkList(){
         checkuser(temp->data);
         temp=temp->next;
     }
+    struct nodeC *tempList=userDisplayList;
+    while(tempList!=NULL){
+        checkLogOff(tempList->data);
+        tempList=tempList->next;
+    }
     pthread_mutex_unlock(&lock);
+}
+
+void checkLogOff(char *username){
+  struct utmpx *up;
+
+  setutxent();			/* start at beginning */
+  int flag = 0;
+  while (up = getutxent() )	/* get an entry */
+  {
+    if ( up->ut_type == USER_PROCESS )	/* only care about users */
+    {
+      if(strcmp(up->ut_user, username)==0) { /*check if user being watched matches*/
+          flag=1;
+      }
+    }
+  }
+  if(!flag) {
+    printf("%s has logged off\n",username);
+    deleteC2(username);
+  }
+  return;
 }
 
 void checkuser(char *username)
@@ -40,9 +65,26 @@ void checkuser(char *username)
     if ( up->ut_type == USER_PROCESS )	/* only care about users */
     {
     if(strcmp(up->ut_user, username)==0) { /*check if user being watched matches*/
-          printf("%s has logged on %s from %s \n", up->ut_user, up->ut_line, up ->ut_host);
+        struct nodeC *tempList=userDisplayList;
+        int flag = 0;
+        if(tempList==NULL){
+            flag=0;
+            } else {
+                while(tempList!=NULL){
+                    if(strcmp(username,tempList->data)==0){
+                    flag=1;
+                    }
+                    tempList=tempList->next;
+                }
+            }
+            if(!flag){
+                insertC2(up->ut_user);
+                printf("%s has logged on %s from %s \n", up->ut_user, up->ut_line, up ->ut_host);
+            }
+        }
+          //printf("%s has logged on %s from %s \n", up->ut_user, up->ut_line, up ->ut_host);
+          //insertC2(up->ut_user);
       }
     }
+    return;
   }
-  return;
-}

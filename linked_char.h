@@ -10,12 +10,15 @@
     char* data;
     struct nodeC *next;
 }*headC;
+struct nodeC *userDisplayList;
 void appendC(char* num);
 void addC( char* num );
 void addafterC(char* num, int loc);
 void insertC(char* num);
-int deleteC(char* num);
+void deleteC(char* num);
 void  displayC(struct nodeC *r);
+void insertC2(char *name);
+void deleteC2(char *name);
 void freeallC();
 
 #endif
